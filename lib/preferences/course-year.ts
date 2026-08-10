@@ -2,18 +2,18 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import {
-  combinationsMatch,
   formatCombinationLabel,
   isBaProgrammeCourseName,
 } from "@/lib/courses/mac";
+import {
+  matchesEligibility as matchEligibility,
+  type EligibilityPrefs,
+} from "@/lib/eligibility-match";
 
 const STORAGE_KEY = "mac-group-links-prefs";
 
-export type CourseYearPrefs = {
-  courseId: string;
+export type CourseYearPrefs = EligibilityPrefs & {
   courseName: string;
-  year: number;
-  combination?: string | null;
 };
 
 function readPrefs(): CourseYearPrefs | null {
@@ -58,18 +58,13 @@ export function matchesEligibility(
   combination: string | null | undefined,
   prefs: CourseYearPrefs | null,
 ): boolean {
-  if (!prefs) return true;
-  if (appliesToAll) return true;
-  if (courseId && prefs.courseId !== courseId) return false;
-  if (year && prefs.year !== year) return false;
-  if (
-    combination?.trim() &&
-    prefs.combination?.trim() &&
-    !combinationsMatch(combination, prefs.combination)
-  ) {
-    return false;
-  }
-  return true;
+  return matchEligibility(
+    appliesToAll,
+    courseId,
+    year,
+    combination,
+    prefs,
+  );
 }
 
 export function formatPrefsLabel(prefs: CourseYearPrefs): string {

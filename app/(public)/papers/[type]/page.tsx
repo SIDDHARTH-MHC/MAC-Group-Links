@@ -1,10 +1,20 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { getActiveSemester } from "@/lib/db/semester";
 import { listDepartments, listPublicPapers } from "@/lib/db/queries";
-import { paperTypeFromParam, PAPER_TYPE_LABELS, formatEligibility } from "@/lib/constants";
-import { Badge } from "@/components/ui/badge";
-import { PaperFilters } from "@/components/papers/paper-filters";
+import { getCourses } from "@/lib/actions/public";
+import { paperTypeFromParam, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { PaperTypeBrowse } from "@/components/papers/paper-type-browse";
+
+const TYPE_BLURBS: Partial<Record<string, string>> = {
+  SEC: "Skill enhancement papers offered across departments.",
+  VAC: "Value addition courses for the semester.",
+  GE: "Generic electives open to eligible programmes.",
+  DSE: "Discipline-specific electives for your programme.",
+  AEC: "Ability enhancement courses including language options.",
+  CORE: "Core papers from your programme catalogue.",
+  SBC: "Skill based courses (where listed for the semester).",
+};
 
 type Props = {
   params: Promise<{ type: string }>;
@@ -19,74 +29,43 @@ export default async function PapersByTypePage({ params, searchParams }: Props) 
 
   const semester = await getActiveSemester();
   if (!semester) {
-    return <p className="text-amber-900/70">No active semester configured.</p>;
+    return (
+      <p className="text-muted-foreground">No active semester configured.</p>
+    );
   }
 
-  const departments = await listDepartments(semester.id);
-  const papers = await listPublicPapers(
-    semester.id,
-    paperType,
-    sp.dept,
-    sp.q
-  );
+  const [departments, papers, courses] = await Promise.all([
+    listDepartments(semester.id),
+    listPublicPapers(semester.id, paperType, sp.dept, sp.q),
+    getCourses(),
+  ]);
 
   const meta = PAPER_TYPE_LABELS[paperType];
 
   return (
     <div className="space-y-6">
       <div>
-        <Badge className="mb-2">{meta.short}</Badge>
-        <h1 className="text-2xl font-bold">{meta.title}</h1>
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+          {meta.short}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-foreground md:text-3xl">
+          {meta.title}
+        </h1>
+        {TYPE_BLURBS[paperType] ? (
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            {TYPE_BLURBS[paperType]}
+          </p>
+        ) : null}
       </div>
 
-      <PaperFilters
-        departments={departments}
-        basePath={`/papers/${typeParam}`}
-      />
-
-      {papers.length === 0 ? (
-        <p className="text-amber-900/70">No papers found.</p>
-      ) : (
-        <ul className="space-y-3">
-          {papers.map((paper) => (
-            <li key={paper.id}>
-              <Link
-                href={`/paper/${paper.id}`}
-                className="block rounded-xl border border-amber-100 bg-white p-4 hover:border-amber-300 md:flex md:items-center md:justify-between"
-              >
-                <div>
-                  <p className="font-medium">{paper.paperName}</p>
-                  <p className="text-sm text-amber-900/60">
-                    {paper.department.name}
-                    {paper.department.departmentRoom
-                      ? ` · Department room ${paper.department.departmentRoom}`
-                      : ""}
-                  </p>
-                  {paper.eligibilities.length > 0 && (
-                    <p className="mt-1 text-xs text-amber-800/70">
-                      {paper.eligibilities
-                        .slice(0, 3)
-                        .map((e) =>
-                          formatEligibility(
-                            e.appliesToAll,
-                            e.course?.name,
-                            e.year,
-                            e.combination
-                          )
-                        )
-                        .join(" · ")}
-                    </p>
-                  )}
-                </div>
-                <span className="mt-2 inline-block text-sm text-amber-800 md:mt-0">
-                  {paper._count.groups} group
-                  {paper._count.groups === 1 ? "" : "s"}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+        <PaperTypeBrowse
+          papers={papers}
+          courses={courses}
+          departments={departments}
+          basePath={`/papers/${typeParam}`}
+        />
+      </Suspense>
     </div>
   );
 }

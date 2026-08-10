@@ -2,22 +2,34 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   formatEligibility,
-  PLATFORM_LABELS,
+  joinGroupButtonLabel,
 } from "@/lib/constants";
-import { useCourseYearPrefs, matchesEligibility, formatPrefsLabel } from "@/lib/preferences/course-year";
+import {
+  useCourseYearPrefs,
+  matchesEligibility,
+  formatPrefsLabel,
+} from "@/lib/preferences/course-year";
 import type {
   Group,
   GroupEligibility,
   Course,
   GroupPlatform,
+  ContributorType,
 } from "@prisma/client";
 import { ReportGroupDialog } from "@/components/groups/report-group-dialog";
 
 export type GroupRow = Group & {
   eligibilities: (GroupEligibility & { course: Course | null })[];
 };
+
+function contributorLine(type: ContributorType | null): string | null {
+  if (type === "PROFESSOR") return "Added by professor";
+  if (type === "STUDENT") return "Added by student";
+  return null;
+}
 
 export function PaperGroupsList({
   groups,
@@ -45,11 +57,17 @@ export function PaperGroupsList({
 
   if (visible.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-amber-200 bg-white/50 p-8 text-center">
-        <p className="text-amber-900/80">No group link has been added yet.</p>
-        <p className="mt-1 text-sm text-amber-800/60">Be the first to contribute.</p>
-        <Button asChild className="mt-4">
-          <Link href={`/contribute?paperId=${paperId}`}>+ Add group link</Link>
+      <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
+        <p className="font-medium text-foreground">
+          No group link has been added yet.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Help your classmates by adding the group link.
+        </p>
+        <Button asChild className="mt-6" size="lg">
+          <Link href={`/contribute/add?paperId=${paperId}`}>
+            + Add Group Link
+          </Link>
         </Button>
       </div>
     );
@@ -58,10 +76,13 @@ export function PaperGroupsList({
   return (
     <div className="space-y-4">
       {prefs && (
-        <p className="text-sm text-amber-800">
-          Showing groups relevant to{" "}
-          <strong>{formatPrefsLabel(prefs)}</strong>.{" "}
-          <Link href="/my-course" className="underline">
+        <p className="text-sm text-muted-foreground">
+          Prioritizing groups for{" "}
+          <span className="font-medium text-foreground">
+            {formatPrefsLabel(prefs)}
+          </span>
+          .{" "}
+          <Link href="/my-course" className="text-primary underline-offset-2 hover:underline">
             Change
           </Link>
         </p>
@@ -69,81 +90,92 @@ export function PaperGroupsList({
       {visible.map((group) => (
         <article
           key={group.id}
-          className="rounded-xl border border-amber-100 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-border bg-card p-5 shadow-sm"
         >
-          <h3 className="text-lg font-semibold">{group.sectionName}</h3>
-          <ul className="mt-3 space-y-1 text-sm">
-            <li>
-              <span className="text-amber-900/60">For: </span>
-              {group.eligibilities.length
-                ? group.eligibilities.map((e) =>
-                    formatEligibility(
-                      e.appliesToAll,
-                      e.course?.name,
-                      e.year,
-                      e.combination
-                    )
-                  ).join(" · ")
-                : "All students taking this paper"}
-            </li>
-            {group.teacherName && (
-              <li>
-                <span className="text-amber-900/60">Teacher: </span>
-                {group.teacherName}
-              </li>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 className="text-lg font-semibold text-foreground">
+              {group.sectionName}
+            </h3>
+            {group.linkVerifiedAt ? (
+              <Badge variant="secondary" className="shrink-0">
+                Verified
+              </Badge>
+            ) : null}
+          </div>
+          {group.eligibilities.length > 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {group.eligibilities
+                .map((e) =>
+                  formatEligibility(
+                    e.appliesToAll,
+                    e.course?.name,
+                    e.year,
+                    e.combination,
+                  ),
+                )
+                .join(" · ")}
+            </p>
+          ) : null}
+          <dl className="mt-4 space-y-2 text-sm">
+            {group.teacherName ? (
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt className="text-muted-foreground">Teacher</dt>
+                <dd className="font-medium text-foreground">
+                  {group.teacherName}
+                </dd>
+              </div>
+            ) : null}
+            {group.actualClassRoom ? (
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt className="text-muted-foreground">Class Room</dt>
+                <dd className="font-medium text-foreground">
+                  {group.actualClassRoom}
+                </dd>
+              </div>
+            ) : null}
+            {(group.days || group.startTime || group.endTime) && (
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt className="text-muted-foreground">Schedule</dt>
+                <dd className="font-medium text-foreground">
+                  {[group.days, group.startTime, group.endTime && `– ${group.endTime}`]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </dd>
+              </div>
             )}
-            {group.actualClassRoom && (
-              <li>
-                <span className="text-amber-900/60">Class room: </span>
-                {group.actualClassRoom}
-              </li>
-            )}
-            {group.days && (
-              <li>
-                <span className="text-amber-900/60">Days: </span>
-                {group.days}
-              </li>
-            )}
-            {(group.startTime || group.endTime) && (
-              <li>
-                <span className="text-amber-900/60">Time: </span>
-                {[group.startTime, group.endTime && `– ${group.endTime}`]
-                  .filter(Boolean)
-                  .join(" ")}
-              </li>
-            )}
-            {group.contributorType && (
-              <li className="text-xs text-amber-800/60">
-                {group.contributorType === "PROFESSOR"
-                  ? "Added by professor"
-                  : "Community contribution"}
-              </li>
-            )}
-          </ul>
+          </dl>
           {group.groupLink ? (
             <Button
               asChild
-              className="mt-4 w-full bg-emerald-700 hover:bg-emerald-800 sm:w-auto"
+              className="mt-5 h-11 w-full text-base sm:w-auto sm:min-w-[14rem]"
+              size="lg"
             >
               <a
                 href={group.groupLink}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Join {PLATFORM_LABELS[group.groupPlatform as GroupPlatform]} group
+                {joinGroupButtonLabel(group.groupPlatform as GroupPlatform)}
               </a>
             </Button>
           ) : (
-            <p className="mt-4 text-sm italic text-amber-800/60">Link not available</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Link not available yet.
+            </p>
           )}
-          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+          {contributorLine(group.contributorType) ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {contributorLine(group.contributorType)}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-4 text-sm">
+            <ReportGroupDialog groupId={group.id} />
             <Link
               href={`/suggest?paperId=${paperId}&groupId=${group.id}`}
-              className="text-amber-800 underline"
+              className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              Suggest an edit
+              Suggest Edit
             </Link>
-            <ReportGroupDialog groupId={group.id} />
           </div>
         </article>
       ))}

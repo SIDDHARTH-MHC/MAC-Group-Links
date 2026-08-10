@@ -40,8 +40,8 @@ export function ReportGroupDialog({ groupId }: { groupId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="text-amber-800 underline">
-        Report this group
+      <DialogTrigger className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+        Report
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

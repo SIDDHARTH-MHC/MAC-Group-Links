@@ -27,14 +27,11 @@ import type { Course } from "@prisma/client";
 import { PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
 
 const EDIT_TYPES: { value: SuggestionType; label: string }[] = [
-  { value: "PAPER_NAME_WRONG", label: "Paper name is wrong" },
-  { value: "WRONG_DEPARTMENT", label: "Wrong department" },
-  { value: "WRONG_ELIGIBILITY", label: "Wrong eligibility" },
-  { value: "MISSING_COURSE_YEAR", label: "Missing course/year" },
-  { value: "WRONG_TEACHER", label: "Wrong teacher" },
-  { value: "WRONG_SECTION", label: "Wrong section" },
-  { value: "WRONG_CLASSROOM", label: "Wrong classroom" },
-  { value: "WRONG_GROUP_LINK", label: "Wrong group link" },
+  { value: "PAPER_NAME_WRONG", label: "Paper information is wrong" },
+  { value: "WRONG_ELIGIBILITY", label: "Eligibility is wrong" },
+  { value: "WRONG_TEACHER", label: "Teacher information is wrong" },
+  { value: "WRONG_CLASSROOM", label: "Classroom is wrong" },
+  { value: "WRONG_GROUP_LINK", label: "Group link is wrong" },
   { value: "LINK_EXPIRED", label: "Group link expired" },
   { value: "OTHER", label: "Other" },
 ];
@@ -43,13 +40,16 @@ export function SuggestForms({
   courses,
   paperId,
   groupId,
+  defaultTab,
 }: {
   courses: Course[];
   paperId?: string;
   groupId?: string;
+  defaultTab?: "edit" | "new";
 }) {
+  const initial = defaultTab ?? "edit";
   return (
-    <Tabs defaultValue={paperId ? "edit" : "new"}>
+    <Tabs defaultValue={initial}>
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="edit">Suggest an edit</TabsTrigger>
         <TabsTrigger value="new">Suggest new paper</TabsTrigger>
@@ -77,7 +77,7 @@ function EditSuggestionForm({
   initialGroupId?: string;
 }) {
   const searchParams = useSearchParams();
-  const [type, setType] = useState<SuggestionType>("OTHER");
+  const [type, setType] = useState<SuggestionType | "">("");
   const [description, setDescription] = useState("");
   const [suggestedValue, setSuggestedValue] = useState("");
   const [paperId] = useState(initialPaperId ?? searchParams.get("paperId") ?? "");
@@ -86,42 +86,91 @@ function EditSuggestionForm({
   const [contributorType, setContributorType] = useState<ContributorType>("STUDENT");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [step, setStep] = useState<"pick" | "details">("pick");
+
+  if (step === "pick") {
+    return (
+      <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">
+          What needs to be updated?
+        </p>
+        <ul className="grid gap-2">
+          {EDIT_TYPES.map((t) => (
+            <li key={t.value}>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto w-full justify-start whitespace-normal py-3 text-left"
+                onClick={() => {
+                  setType(t.value);
+                  setStep("details");
+                }}
+              >
+                {t.label}
+              </Button>
+            </li>
+          ))}
+          <li>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto w-full justify-start py-3 text-left"
+              onClick={() => {
+                setType("OTHER");
+                setStep("details");
+              }}
+            >
+              Paper is missing
+            </Button>
+          </li>
+        </ul>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4 rounded-xl border border-amber-100 bg-white p-5">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        onClick={() => setStep("pick")}
+      >
+        ← Choose another issue
+      </Button>
+      <p className="text-sm font-medium text-foreground">
+        {EDIT_TYPES.find((t) => t.value === type)?.label ??
+          (type === "OTHER" ? "Paper is missing" : "Suggest an update")}
+      </p>
       <div>
-        <Label>Suggestion type</Label>
-        <Select value={type} onValueChange={(v) => setType(v as SuggestionType)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EDIT_TYPES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Description</Label>
+        <Label htmlFor="suggest-desc">What should we know?</Label>
         <Textarea
+          id="suggest-desc"
+          className="mt-1.5"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
+          placeholder="Briefly describe the correct information…"
         />
       </div>
       <div>
-        <Label>Suggested value (optional)</Label>
+        <Label htmlFor="suggest-value">Suggested fix (optional)</Label>
         <Input
+          id="suggest-value"
+          className="mt-1.5"
           value={suggestedValue}
           onChange={(e) => setSuggestedValue(e.target.value)}
         />
       </div>
       <div>
-        <Label>Your name (optional)</Label>
-        <Input value={contributorName} onChange={(e) => setContributorName(e.target.value)} />
+        <Label htmlFor="suggest-name">Your name (optional)</Label>
+        <Input
+          id="suggest-name"
+          className="mt-1.5"
+          value={contributorName}
+          onChange={(e) => setContributorName(e.target.value)}
+        />
       </div>
       <div>
         <Label>You are</Label>
@@ -129,7 +178,7 @@ function EditSuggestionForm({
           value={contributorType}
           onValueChange={(v) => setContributorType(v as ContributorType)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="mt-1.5">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -139,13 +188,25 @@ function EditSuggestionForm({
           </SelectContent>
         </Select>
       </div>
-      {message && <p className="text-sm text-emerald-800">{message}</p>}
+      {message && (
+        <p
+          className={
+            message.toLowerCase().includes("thank")
+              ? "text-sm text-emerald-700"
+              : "text-sm text-destructive"
+          }
+        >
+          {message}
+        </p>
+      )}
       <Button
-        disabled={pending}
+        size="lg"
+        className="w-full"
+        disabled={pending || !type || !description.trim()}
         onClick={() =>
           startTransition(async () => {
             const res = await submitSuggestion({
-              type,
+              type: type as SuggestionType,
               description,
               suggestedValue: suggestedValue || undefined,
               paperId: paperId || undefined,
@@ -157,7 +218,7 @@ function EditSuggestionForm({
           })
         }
       >
-        Submit suggestion
+        {pending ? "Submitting…" : "Submit suggestion"}
       </Button>
     </div>
   );
@@ -177,7 +238,7 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="space-y-4 rounded-xl border border-amber-100 bg-white p-5">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-5">
       <div>
         <Label>Paper type</Label>
         <Select value={paperType} onValueChange={(v) => setPaperType(v as PaperType)}>
@@ -246,8 +307,24 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       <div>
-        <Label>Your name</Label>
+        <Label>Your name (optional)</Label>
         <Input value={contributorName} onChange={(e) => setContributorName(e.target.value)} />
+      </div>
+      <div>
+        <Label>You are</Label>
+        <Select
+          value={contributorType}
+          onValueChange={(v) => setContributorType(v as ContributorType)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="STUDENT">Student</SelectItem>
+            <SelectItem value="PROFESSOR">Professor</SelectItem>
+            <SelectItem value="OTHER">Other</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       {message && <p className="text-sm text-emerald-800">{message}</p>}
       <Button

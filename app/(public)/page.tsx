@@ -1,83 +1,71 @@
 import Link from "next/link";
 import { getActiveSemester } from "@/lib/db/semester";
-import { getRecentGroups } from "@/lib/db/queries";
 import { PaperTypeGrid } from "@/components/papers/paper-type-grid";
-import { GroupCard } from "@/components/groups/group-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MacSearchBar } from "@/components/ui/mac-search-bar";
+import { CoursePrefsCard } from "@/components/layout/course-prefs-card";
 import { cnSemesterLabel } from "@/lib/constants";
-import { Search } from "lucide-react";
 
 export default async function HomePage() {
   const semester = await getActiveSemester();
-  const recent = semester
-    ? await getRecentGroups(semester.id)
-    : [];
 
   return (
     <div className="space-y-10">
-      <section className="space-y-3">
-        <p className="text-sm font-medium text-amber-800">Maharaja Agrasen College</p>
-        <h1 className="text-3xl font-bold tracking-tight text-amber-950">
-          MAC Group Links
+      <section className="space-y-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Maharaja Agrasen College
+          </p>
+          {semester ? (
+            <p className="mt-1 inline-flex rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+              {cnSemesterLabel(semester.academicYear, semester.semesterNumber)}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-muted-foreground">
+              No active semester yet.
+            </p>
+          )}
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          Find your class group in seconds.
         </h1>
-        {semester ? (
-          <p className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-900">
-            {cnSemesterLabel(semester.academicYear, semester.semesterNumber)}
-          </p>
-        ) : (
-          <p className="text-sm text-amber-800">
-            No active semester yet. Check back soon.
-          </p>
-        )}
-        <p className="max-w-xl text-amber-900/80">
-          Find your SEC, VAC, GE, DSE, AEC &amp; Core class groups easily.
+        <p className="max-w-xl text-base text-muted-foreground">
+          Find SEC, VAC, GE, DSE, AEC and Core paper groups for MAC.
         </p>
-        <form action="/search" className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/50" />
-          <Input
-            name="q"
-            placeholder="Search papers..."
-            className="h-11 border-amber-200 bg-white pl-10"
-          />
+        <form action="/search" method="get" className="max-w-2xl">
+          <MacSearchBar size="hero" />
         </form>
       </section>
 
+      <div className="md:hidden">
+        <CoursePrefsCard />
+      </div>
+
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Browse by paper type</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Browse by paper type
+        </h2>
         <PaperTypeGrid />
       </section>
 
-      {recent.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Recently added groups</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {recent.map((g) => (
-              <GroupCard key={g.id} group={g} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-amber-100 bg-white/70 p-5">
-          <h3 className="font-semibold">Need a group link?</h3>
-          <p className="mt-1 text-sm text-amber-900/70">
-            Share a WhatsApp or Telegram link with your classmates.
+      <section className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href="/contribute/add"
+          className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30 hover:bg-accent/30"
+        >
+          <p className="font-semibold text-foreground">+ Add group link</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Help classmates find a missing WhatsApp or Telegram group.
           </p>
-          <Button asChild className="mt-4 w-full sm:w-auto">
-            <Link href="/contribute">+ Add group link</Link>
-          </Button>
-        </div>
-        <div className="rounded-xl border border-amber-100 bg-white/70 p-5">
-          <h3 className="font-semibold">Can&apos;t find your paper?</h3>
-          <p className="mt-1 text-sm text-amber-900/70">
-            Suggest a missing paper from the official list.
+        </Link>
+        <Link
+          href="/suggest"
+          className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30 hover:bg-accent/30"
+        >
+          <p className="font-semibold text-foreground">Suggest a paper</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tell admin if a paper or detail is missing from the catalogue.
           </p>
-          <Button asChild variant="outline" className="mt-4 w-full border-amber-200 sm:w-auto">
-            <Link href="/suggest">Suggest a paper</Link>
-          </Button>
-        </div>
+        </Link>
       </section>
     </div>
   );

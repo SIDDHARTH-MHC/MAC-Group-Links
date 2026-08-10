@@ -87,6 +87,7 @@ export async function searchPapers(semesterId: string, query: string) {
     include: {
       department: true,
       eligibilities: { include: { course: true } },
+      _count: { select: { groups: { where: { status: "ACTIVE" } } } },
     },
     take: 40,
     orderBy: { paperName: "asc" },

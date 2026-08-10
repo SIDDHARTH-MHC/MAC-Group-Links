@@ -26,22 +26,71 @@ export function MyCourseForm({
 }) {
   const { prefs, setPrefs, loaded } = useCourseYearPrefs();
   const [courseId, setCourseId] = useState(prefs?.courseId ?? "");
-  const [year, setYear] = useState(prefs ? String(prefs.year) : "1");
+  const [year, setYear] = useState(prefs ? String(prefs.year) : "2");
   const [combination, setCombination] = useState(prefs?.combination ?? "");
+  const [editing, setEditing] = useState(false);
 
   const selectedCourse = courses.find((c) => c.id === courseId);
   const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
-  if (!loaded) return <p className="text-sm">Loading…</p>;
+  if (!loaded) {
+    return (
+      <div className="h-40 animate-pulse rounded-xl border border-border bg-muted/40" />
+    );
+  }
+
+  if (prefs && !editing) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">You are currently viewing:</p>
+        <p className="mt-2 text-lg font-semibold text-foreground">
+          {prefs.courseName}
+        </p>
+        {prefs.combination ? (
+          <p className="text-muted-foreground">
+            {formatCombinationLabel(prefs.combination)}
+          </p>
+        ) : null}
+        <p className="font-medium text-foreground">
+          {prefs.year === 1
+            ? "1st Year"
+            : prefs.year === 2
+              ? "2nd Year"
+              : "3rd Year"}
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            setCourseId(prefs.courseId);
+            setYear(String(prefs.year));
+            setCombination(prefs.combination ?? "");
+            setEditing(true);
+          }}
+        >
+          Change
+        </Button>
+      </div>
+    );
+  }
+
+  if (!prefs && !editing) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
+        <p className="text-muted-foreground">
+          Select your course and year to get personalized results.
+        </p>
+        <Button className="mt-4" size="lg" onClick={() => setEditing(true)}>
+          Select Course
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-md space-y-4 rounded-xl border border-amber-100 bg-white p-5">
-      <p className="text-sm text-amber-900/70">
-        Saved on this device only — no account needed. Used to highlight relevant
-        groups.
-      </p>
+    <div className="mx-auto max-w-md space-y-4 rounded-xl border border-border bg-card p-5">
       <div>
-        <Label>Course</Label>
+        <Label htmlFor="course-select">Course</Label>
         <Select
           value={courseId}
           onValueChange={(v) => {
@@ -49,7 +98,7 @@ export function MyCourseForm({
             setCombination("");
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger id="course-select" className="mt-1.5">
             <SelectValue placeholder="Select course" />
           </SelectTrigger>
           <SelectContent>
@@ -63,12 +112,12 @@ export function MyCourseForm({
       </div>
       {showCombination && (
         <div>
-          <Label>Combination (B.A. Programme)</Label>
+          <Label htmlFor="combo-select">Combination (B.A. Programme)</Label>
           <Select
             value={combination}
             onValueChange={(v) => setCombination(v ?? "")}
           >
-            <SelectTrigger>
+            <SelectTrigger id="combo-select" className="mt-1.5">
               <SelectValue placeholder="Select combination" />
             </SelectTrigger>
             <SelectContent>
@@ -79,15 +128,12 @@ export function MyCourseForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="mt-1 text-xs text-amber-800/60">
-            Commerce combinations were formerly listed as OMSP at MAC.
-          </p>
         </div>
       )}
       <div>
-        <Label>Year</Label>
+        <Label htmlFor="year-select">Year</Label>
         <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
-          <SelectTrigger>
+          <SelectTrigger id="year-select" className="mt-1.5">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -97,26 +143,47 @@ export function MyCourseForm({
           </SelectContent>
         </Select>
       </div>
-      <Button
-        className="w-full"
-        onClick={() => {
-          const course = courses.find((c) => c.id === courseId);
-          if (!course) return;
-          setPrefs({
-            courseId,
-            courseName: course.name,
-            year: Number(year),
-            combination: showCombination && combination ? combination : null,
-          });
-        }}
-      >
-        Save
-      </Button>
-      {prefs && (
-        <Button variant="ghost" className="w-full" onClick={() => setPrefs(null)}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          className="flex-1"
+          size="lg"
+          onClick={() => {
+            const course = courses.find((c) => c.id === courseId);
+            if (!course) return;
+            setPrefs({
+              courseId,
+              courseName: course.name,
+              year: Number(year),
+              combination: showCombination && combination ? combination : null,
+            });
+            setEditing(false);
+          }}
+        >
+          Save selection
+        </Button>
+        {prefs ? (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </Button>
+        ) : null}
+      </div>
+      {prefs ? (
+        <Button
+          variant="link"
+          className="w-full text-muted-foreground"
+          onClick={() => {
+            setPrefs(null);
+            setEditing(false);
+          }}
+        >
           Clear preference
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }

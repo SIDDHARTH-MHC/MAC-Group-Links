@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,10 +76,6 @@ export function ContributeForm({
     }
   }
 
-  useEffect(() => {
-    if (appliesMode === "mine") applyMinePrefs();
-  }, [appliesMode]);
-
   const selectedCourse = courses.find((c) => c.id === courseId);
   const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
@@ -137,7 +133,7 @@ export function ContributeForm({
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-amber-100 bg-white p-5">
+    <div className="space-y-6 rounded-xl border border-border bg-card p-5">
       <div>
         <Label>Paper</Label>
         <Select value={paperId} onValueChange={(v) => setPaperId(v ?? "")}>
@@ -168,13 +164,19 @@ export function ContributeForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mine">My course/year</SelectItem>
+            <SelectItem value="mine">My course &amp; year</SelectItem>
             <SelectItem value="select">Select course/year</SelectItem>
             <SelectItem value="multiple">Multiple courses/years</SelectItem>
             <SelectItem value="all">Everyone taking this paper</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {appliesMode === "mine" && !courseId ? (
+        <Button type="button" variant="secondary" size="sm" onClick={applyMinePrefs}>
+          Load from My Course
+        </Button>
+      ) : null}
 
       {(appliesMode === "select" || appliesMode === "mine") && (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -294,7 +296,7 @@ export function ContributeForm({
         <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
       </div>
       <div>
-        <Label>Actual class room (optional)</Label>
+        <Label>Actual Class Room (optional)</Label>
         <Input
           value={actualClassRoom}
           onChange={(e) => setActualClassRoom(e.target.value)}
@@ -377,6 +379,7 @@ export function ContributeForm({
 
       <Button
         className="w-full"
+        size="lg"
         disabled={pending}
         onClick={submit}
       >

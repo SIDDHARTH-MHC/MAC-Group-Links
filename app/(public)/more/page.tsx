@@ -1,21 +1,33 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+
+const links = [
+  { href: "/about", label: "About", description: "What this site is and how it works" },
+  { href: "/papers/sec", label: "Browse papers", description: "Start from SEC or pick another type on Home" },
+  { href: "/contribute", label: "Contribute", description: "Add links or suggest catalogue fixes" },
+  { href: "/suggest", label: "Suggest an update", description: "Report wrong paper or group info" },
+];
 
 export default function MorePage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">More</h1>
-      <ul className="divide-y divide-amber-100 rounded-xl border border-amber-100 bg-white">
-        {[
-          { href: "/about", label: "About" },
-          { href: "/suggest", label: "Suggest a paper or edit" },
-          { href: "/papers/sec", label: "Browse SEC papers" },
-        ].map((item) => (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-foreground">More</h1>
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {links.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
-              className="block px-4 py-3 text-amber-950 hover:bg-amber-50"
+              className="flex items-center justify-between gap-3 px-4 py-4 hover:bg-muted/50"
             >
-              {item.label}
+              <span>
+                <span className="block font-medium text-foreground">
+                  {item.label}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {item.description}
+                </span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
             </Link>
           </li>
         ))}

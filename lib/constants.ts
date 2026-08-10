@@ -4,13 +4,13 @@ export const PAPER_TYPE_LABELS: Record<
   PaperType,
   { short: string; title: string }
 > = {
-  SEC: { short: "SEC", title: "Skill Enhancement Courses" },
-  VAC: { short: "VAC", title: "Value Addition Courses" },
-  GE: { short: "GE", title: "Generic Electives" },
-  DSE: { short: "DSE", title: "Discipline Specific Electives" },
-  AEC: { short: "AEC", title: "Ability Enhancement Courses" },
-  CORE: { short: "CORE", title: "Core Papers" },
-  SBC: { short: "SBC", title: "Skill Based Course (Sem 7)" },
+  SEC: { short: "SEC", title: "Skill Enhancement Course" },
+  VAC: { short: "VAC", title: "Value Addition Course" },
+  GE: { short: "GE", title: "Generic Elective" },
+  DSE: { short: "DSE", title: "Discipline Specific Elective" },
+  AEC: { short: "AEC", title: "Ability Enhancement Course" },
+  CORE: { short: "CORE", title: "Core Course" },
+  SBC: { short: "SBC", title: "Skill Based Course" },
 };
 
 export const PAPER_TYPES = Object.keys(PAPER_TYPE_LABELS) as PaperType[];
@@ -44,7 +44,13 @@ export function formatEligibility(
   if (courseName) parts.push(courseName);
   if (year) parts.push(YEAR_LABELS[year] ?? `Year ${year}`);
   if (combination) parts.push(combination);
-  return parts.join(" — ") || "Not specified";
+  return parts.join(" • ") || "Not specified";
+}
+
+export function joinGroupButtonLabel(platform: GroupPlatform): string {
+  if (platform === "WHATSAPP") return "Join WhatsApp Group";
+  if (platform === "TELEGRAM") return "Join Telegram Group";
+  return "Open Group";
 }
 
 export function normalizeGroupLink(url: string): string {

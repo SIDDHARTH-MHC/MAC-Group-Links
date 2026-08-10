@@ -18,23 +18,26 @@ export function MobileNav() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-amber-100 bg-[#fffaf3] pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      aria-label="Mobile navigation"
+    >
       <ul className="mx-auto flex max-w-lg justify-around">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
-            href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(href);
+            href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <li key={href}>
               <Link
                 href={href}
                 className={cn(
-                  "flex min-w-[4.5rem] flex-col items-center gap-0.5 px-2 py-2.5 text-[10px]",
-                  active ? "text-amber-900 font-medium" : "text-amber-800/60"
+                  "flex min-h-[3.25rem] min-w-[4.25rem] flex-col items-center justify-center gap-0.5 px-2 py-1 text-[11px]",
+                  active
+                    ? "font-semibold text-primary"
+                    : "text-muted-foreground",
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-5 w-5" aria-hidden />
                 {label}
               </Link>
             </li>

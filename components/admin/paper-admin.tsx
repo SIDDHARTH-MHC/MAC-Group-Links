@@ -135,7 +135,8 @@ export function PaperAdminClient({
           </p>
         </div>
       ) : (
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <>
+      <div className="hidden overflow-x-auto rounded-lg border border-border bg-card md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -196,6 +197,56 @@ export function PaperAdminClient({
           </TableBody>
         </Table>
       </div>
+      <ul className="space-y-3 md:hidden">
+        {filtered.map((paper) => (
+          <li
+            key={paper.id}
+            className="rounded-xl border border-border bg-card p-4 shadow-sm"
+          >
+            <p className="font-medium text-foreground">{paper.paperName}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {paper.paperType} · {paper.department.name}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {paper._count.groups} groups
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/admin/papers/${paper.id}`}>Edit</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/admin/papers/${paper.id}#groups`}>Groups</Link>
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger className={buttonVariants({ variant: "destructive", size: "sm" })}>
+                  Delete
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete {paper.paperName}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove this paper and its associated group data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        startTransition(() => {
+                          void deletePaper(paper.id);
+                        })
+                      }
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </li>
+        ))}
+      </ul>
+      </>
       )}
     </div>
   );

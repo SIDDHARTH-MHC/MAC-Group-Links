@@ -12,76 +12,70 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         {semester ? (
-          <p className="text-slate-600">
-            Active semester:{" "}
-            {cnSemesterLabel(semester.academicYear, semester.semesterNumber)}
-          </p>
+          <div className="mt-3 rounded-lg border border-border bg-card px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Active semester
+            </p>
+            <p className="mt-1 font-semibold text-foreground">
+              {cnSemesterLabel(semester.academicYear, semester.semesterNumber)}
+            </p>
+          </div>
         ) : (
-          <p className="text-amber-700">No active semester — create one first.</p>
+          <p className="mt-2 text-destructive">No active semester — create one first.</p>
         )}
       </div>
 
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total papers" value={stats.totalPapers} />
-          <StatCard title="Total groups" value={stats.totalGroups} />
-          <StatCard title="Groups with links" value={stats.groupsWithLinks} />
-          <StatCard title="Groups without links" value={stats.groupsWithoutLinks} />
-          <StatCard title="Pending contributions" value={stats.pendingContributions} />
-          <StatCard title="Pending suggestions" value={stats.pendingSuggestions} />
-          <StatCard title="Pending reports" value={stats.pendingReports} />
-        </div>
-      )}
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard title="Papers" value={stats.totalPapers} />
+            <StatCard title="Groups" value={stats.totalGroups} />
+            <StatCard
+              title="Pending contributions"
+              value={stats.pendingContributions}
+            />
+            <StatCard
+              title="Pending suggestions"
+              value={stats.pendingSuggestions}
+            />
+            <StatCard title="Reports" value={stats.pendingReports} />
+          </div>
 
-      {stats && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Papers by type</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-2 text-sm sm:grid-cols-6">
-            <span>SEC: {stats.sec}</span>
-            <span>VAC: {stats.vac}</span>
-            <span>GE: {stats.ge}</span>
-            <span>DSE: {stats.dse}</span>
-            <span>AEC: {stats.aec}</span>
-            <span>CORE: {stats.core}</span>
-          </CardContent>
-        </Card>
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-foreground">Quick actions</h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button asChild size="lg">
+                <Link href="/admin/papers">Add Paper</Link>
+              </Button>
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/admin/papers/import">Import Catalogue</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/admin/contributions">Review Contributions</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/admin/suggestions">Review Suggestions</Link>
+              </Button>
+            </div>
+          </section>
+        </>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button asChild>
-          <Link href="/admin/semesters">+ New semester</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/admin/papers">Add paper</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/admin/contributions">Review contributions</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/admin/suggestions">Review suggestions</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/admin/reports">Review reports</Link>
-        </Button>
-      </div>
     </div>
   );
 }
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-3xl font-bold tabular-nums text-foreground">{value}</p>
       </CardContent>
     </Card>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { MacSearchBar } from "@/components/ui/mac-search-bar";
 import { Badge } from "@/components/ui/badge";
 import { PAPER_TYPE_LABELS } from "@/lib/constants";
 import type { Paper, PaperEligibility, Course, Department } from "@prisma/client";
@@ -11,6 +11,7 @@ import type { Paper, PaperEligibility, Course, Department } from "@prisma/client
 type PaperRow = Paper & {
   department: Department;
   eligibilities: (PaperEligibility & { course: Course | null })[];
+  _count?: { groups: number };
 };
 
 export default function SearchPage() {
@@ -27,6 +28,10 @@ export default function SearchPage() {
         const params = new URLSearchParams();
         if (q.trim()) params.set("q", q.trim());
         router.replace(`/search?${params.toString()}`, { scroll: false });
+        if (!q.trim()) {
+          setResults([]);
+          return;
+        }
         const res = await fetch(`/api/search?${params.toString()}`);
         if (res.ok) {
           setResults(await res.json());
@@ -38,39 +43,64 @@ export default function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Search</h1>
-      <Input
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Search</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Papers, teachers, and departments for the active semester.
+        </p>
+      </div>
+      <MacSearchBar
+        key={initial}
         value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Paper, department, teacher..."
-        className="h-11 border-amber-200 bg-white"
+        onChange={setQ}
+        placeholder="Search papers, teachers or departments"
         autoFocus
       />
-      {pending && <p className="text-sm text-amber-800/60">Searching…</p>}
-      {!pending && q.trim() && results.length === 0 && (
-        <p className="text-amber-900/70">No matching papers found.</p>
+      {pending && (
+        <ul className="space-y-3" aria-busy="true">
+          {[1, 2, 3].map((i) => (
+            <li
+              key={i}
+              className="h-24 animate-pulse rounded-xl border border-border bg-muted/40"
+            />
+          ))}
+        </ul>
       )}
-      <ul className="space-y-3">
-        {results.map((paper) => (
-          <li key={paper.id}>
-            <Link
-              href={`/paper/${paper.id}`}
-              className="block rounded-lg border border-amber-100 bg-white p-4 hover:border-amber-300"
-            >
-              <Badge variant="secondary" className="mb-2">
-                {PAPER_TYPE_LABELS[paper.paperType].short}
-              </Badge>
-              <p className="font-medium">{paper.paperName}</p>
-              <p className="text-sm text-amber-900/60">
-                {paper.department.name}
-                {paper.department.departmentRoom
-                  ? ` · Dept room ${paper.department.departmentRoom}`
-                  : ""}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {!pending && q.trim() && results.length === 0 && (
+        <p className="text-muted-foreground">No matching papers found.</p>
+      )}
+      {!pending && (
+        <ul className="space-y-3">
+          {results.map((paper) => (
+            <li key={paper.id}>
+              <Link
+                href={`/paper/${paper.id}`}
+                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30 hover:bg-accent/20"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <Badge variant="secondary" className="mb-2">
+                      {PAPER_TYPE_LABELS[paper.paperType].short}
+                    </Badge>
+                    <p className="font-semibold text-foreground">
+                      {paper.paperName}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {paper.department.name}
+                    </p>
+                  </div>
+                  {paper._count ? (
+                    <p className="text-sm text-muted-foreground">
+                      {paper._count.groups} group
+                      {paper._count.groups === 1 ? "" : "s"} available
+                    </p>
+                  ) : null}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
