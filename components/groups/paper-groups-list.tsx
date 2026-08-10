@@ -6,7 +6,7 @@ import {
   formatEligibility,
   PLATFORM_LABELS,
 } from "@/lib/constants";
-import { useCourseYearPrefs, matchesEligibility } from "@/lib/preferences/course-year";
+import { useCourseYearPrefs, matchesEligibility, formatPrefsLabel } from "@/lib/preferences/course-year";
 import type {
   Group,
   GroupEligibility,
@@ -32,7 +32,13 @@ export function PaperGroupsList({
     ? groups.filter((g) => {
         if (g.eligibilities.length === 0) return true;
         return g.eligibilities.some((e) =>
-          matchesEligibility(e.appliesToAll, e.courseId, e.year, prefs)
+          matchesEligibility(
+            e.appliesToAll,
+            e.courseId,
+            e.year,
+            e.combination,
+            prefs,
+          ),
         );
       })
     : groups;
@@ -54,10 +60,7 @@ export function PaperGroupsList({
       {prefs && (
         <p className="text-sm text-amber-800">
           Showing groups relevant to{" "}
-          <strong>
-            {prefs.courseName} — {prefs.year === 1 ? "1st" : prefs.year === 2 ? "2nd" : "3rd"} Year
-          </strong>
-          .{" "}
+          <strong>{formatPrefsLabel(prefs)}</strong>.{" "}
           <Link href="/my-course" className="underline">
             Change
           </Link>

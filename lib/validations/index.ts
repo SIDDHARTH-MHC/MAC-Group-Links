@@ -115,15 +115,29 @@ export const semesterFormSchema = z.object({
   semesterNumber: z.coerce.number().int().min(1).max(8),
 });
 
-export const paperImportSchema = z.array(
-  z.object({
-    paperType: z.nativeEnum(PaperType),
-    paperName: z.string().min(2),
-    department: z.string().min(1),
-    departmentRoom: z.string().optional(),
-    paperCode: z.string().optional(),
-    sourceDocumentUrl: z.string().optional(),
-    eligibilityNotes: z.string().max(2000).optional(),
-    eligibilities: z.array(importEligibilitySchema).default([]),
+export const paperImportRowSchema = z.object({
+  paperType: z.nativeEnum(PaperType),
+  paperName: z.string().min(2),
+  department: z.string().min(1),
+  departmentRoom: z.string().optional().nullable(),
+  paperCode: z.string().optional(),
+  dseNumber: z.string().optional().nullable(),
+  seatCapacity: z.coerce.number().int().positive().optional().nullable(),
+  prerequisite: z.string().optional().nullable(),
+  sourceDocument: z.string().optional().nullable(),
+  sourcePage: z.coerce.number().int().optional().nullable(),
+  sourceText: z.string().optional().nullable(),
+  sourceDocumentUrl: z.string().optional(),
+  eligibilityNotes: z.string().max(2000).optional().nullable(),
+  eligibilities: z.array(importEligibilitySchema).default([]),
+});
+
+export const paperImportSchema = z.array(paperImportRowSchema);
+
+export const officialCatalogueImportSchema = z.array(
+  paperImportRowSchema.extend({
+    semesterNumber: z.coerce.number().int().min(1).max(8),
+    needsReview: z.boolean().optional(),
+    reviewNote: z.string().optional().nullable(),
   }),
 );

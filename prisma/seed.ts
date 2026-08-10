@@ -46,25 +46,18 @@ async function main() {
     });
   }
 
-  const courses = await Promise.all([
-    prisma.course.create({
-      data: { name: "BA Programme", shortName: "BA Prog" },
-    }),
-    prisma.course.create({
-      data: { name: "B.Com", shortName: "B.Com" },
-    }),
-    prisma.course.create({
-      data: { name: "B.Com (Hons)", shortName: "B.Com(H)" },
-    }),
-    prisma.course.create({
-      data: { name: "B.A. (Hons) Economics", shortName: "BA Eco H" },
-    }),
-    prisma.course.create({
-      data: { name: "B.A. (Hons) Business Economics", shortName: "BA BE H" },
-    }),
-  ]);
+  const courses = [];
+  const courseSeed = JSON.parse(
+    readFileSync(join(__dirname, "data/courses.json"), "utf-8"),
+  ) as { courses: { name: string; shortName: string }[] };
 
-  const baProg = courses[0];
+  for (const c of courseSeed.courses) {
+    const row = await prisma.course.create({ data: c });
+    courses.push(row);
+  }
+
+  const baProg = courses.find((c) => c.name === "B.A. Programme");
+  if (!baProg) throw new Error("B.A. Programme course missing from seed");
 
   const semester = await prisma.semester.create({
     data: {

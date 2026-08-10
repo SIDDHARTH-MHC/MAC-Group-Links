@@ -10,13 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCourseYearPrefs } from "@/lib/preferences/course-year";
+import {
+  useCourseYearPrefs,
+  isBaProgrammeCourseName,
+} from "@/lib/preferences/course-year";
+import { formatCombinationLabel } from "@/lib/courses/mac";
 import type { Course } from "@prisma/client";
 
-export function MyCourseForm({ courses }: { courses: Course[] }) {
+export function MyCourseForm({
+  courses,
+  baCombinations,
+}: {
+  courses: Course[];
+  baCombinations: string[];
+}) {
   const { prefs, setPrefs, loaded } = useCourseYearPrefs();
   const [courseId, setCourseId] = useState(prefs?.courseId ?? "");
   const [year, setYear] = useState(prefs ? String(prefs.year) : "1");
+  const [combination, setCombination] = useState(prefs?.combination ?? "");
+
+  const selectedCourse = courses.find((c) => c.id === courseId);
+  const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
   if (!loaded) return <p className="text-sm">Loading…</p>;
 
@@ -28,7 +42,13 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
       </p>
       <div>
         <Label>Course</Label>
-        <Select value={courseId} onValueChange={(v) => setCourseId(v ?? "")}>
+        <Select
+          value={courseId}
+          onValueChange={(v) => {
+            setCourseId(v ?? "");
+            setCombination("");
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select course" />
           </SelectTrigger>
@@ -41,6 +61,29 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
           </SelectContent>
         </Select>
       </div>
+      {showCombination && (
+        <div>
+          <Label>Combination (B.A. Programme)</Label>
+          <Select
+            value={combination}
+            onValueChange={(v) => setCombination(v ?? "")}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select combination" />
+            </SelectTrigger>
+            <SelectContent>
+              {baCombinations.map((combo) => (
+                <SelectItem key={combo} value={combo}>
+                  {formatCombinationLabel(combo)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-amber-800/60">
+            Commerce combinations were formerly listed as OMSP at MAC.
+          </p>
+        </div>
+      )}
       <div>
         <Label>Year</Label>
         <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
@@ -63,6 +106,7 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
             courseId,
             courseName: course.name,
             year: Number(year),
+            combination: showCombination && combination ? combination : null,
           });
         }}
       >

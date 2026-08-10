@@ -10,7 +10,9 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed-courses": "tsx prisma/seed-courses.ts",
+    "catalogue:extract": "python3 scripts/extract_official_catalogue.py"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

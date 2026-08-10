@@ -1,3 +1,4 @@
+import { BA_PROGRAMME_COMBINATIONS } from "@/lib/courses/mac";
 import { getCourses } from "@/lib/actions/public";
 import { MyCourseForm } from "@/components/forms/my-course-form";
 
@@ -6,7 +7,7 @@ export default async function MyCoursePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">My course</h1>
-      <MyCourseForm courses={courses} />
+      <MyCourseForm courses={courses} baCombinations={BA_PROGRAMME_COMBINATIONS} />
     </div>
   );
 }

@@ -7,12 +7,16 @@ import {
   groupFormSchema,
   paperFormSchema,
   paperImportSchema,
+  officialCatalogueImportSchema,
   semesterFormSchema,
   adminLoginSchema,
 } from "@/lib/validations";
 import { normalizeGroupLink, groupLinkFields } from "@/lib/constants";
 import { findDepartmentByName, duplicateGroupLinkMessage } from "@/lib/db/departments";
 import { loadCoursesByName, mapImportEligibilities } from "@/lib/admin/import-papers";
+import { previewOfficialCatalogue } from "@/lib/catalogue/official";
+import type { z } from "zod";
+import type { paperImportRowSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -197,6 +201,122 @@ export async function deletePaper(paperId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+type ImportRow = z.infer<typeof paperImportRowSchema>;
+
+function paperImportCreateData(
+  semesterId: string,
+  p: ImportRow,
+  departmentId: string,
+  eligibilities: ReturnType<typeof mapImportEligibilities>["eligibilities"],
+) {
+  return {
+    semesterId,
+    paperType: p.paperType,
+    paperName: p.paperName.trim(),
+    paperCode: p.paperCode,
+    departmentId,
+    dseNumber: p.dseNumber ?? undefined,
+    seatCapacity: p.seatCapacity ?? undefined,
+    prerequisite: p.prerequisite ?? undefined,
+    sourceDocument: p.sourceDocument ?? undefined,
+    sourcePage: p.sourcePage ?? undefined,
+    sourceText: p.sourceText ?? undefined,
+    sourceDocumentUrl: p.sourceDocumentUrl,
+    eligibilityNotes: p.eligibilityNotes ?? undefined,
+    eligibilities: { create: eligibilities },
+  };
+}
+
+async function validateImportRows(
+  semesterId: string,
+  rows: ImportRow[],
+  coursesByName: Map<string, string>,
+) {
+  const errors: string[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowLabel = `Row ${i + 1} (${row.paperName})`;
+    const dept = await findDepartmentByName(row.department);
+    if (!dept) {
+      errors.push(`${rowLabel}: Unknown department "${row.department}"`);
+      continue;
+    }
+    const { error: eligError } = mapImportEligibilities(
+      row.eligibilities,
+      coursesByName,
+    );
+    if (eligError) errors.push(`${rowLabel}: ${eligError}`);
+    const dup = await prisma.paper.findFirst({
+      where: {
+        semesterId,
+        paperType: row.paperType,
+        paperName: row.paperName.trim(),
+        departmentId: dept.id,
+      },
+    });
+    if (dup) errors.push(`${rowLabel}: Paper already exists in this semester`);
+  }
+  return errors;
+}
+
+export async function getOfficialCataloguePreview(semesterNumber?: number) {
+  await requireAdminSession();
+  return previewOfficialCatalogue(semesterNumber);
+}
+
+export async function importOfficialCatalogue(
+  semesterId: string,
+  catalogueSemesterNumber: number,
+  options?: { includeNeedsReview?: boolean },
+): Promise<ActionResult> {
+  await requireAdminSession();
+  const includeNeedsReview = options?.includeNeedsReview ?? false;
+  const preview = previewOfficialCatalogue(catalogueSemesterNumber);
+  const rows = preview.rows.filter(
+    (r) => includeNeedsReview || !r.needsReview,
+  );
+  if (rows.length === 0) {
+    return { ok: false, error: "No importable rows for this semester." };
+  }
+
+  const coursesByName = await loadCoursesByName();
+  const errors = await validateImportRows(semesterId, rows, coursesByName);
+  if (errors.length > 0) {
+    return {
+      ok: false,
+      error: `Import failed:\n${errors.slice(0, 12).join("\n")}`,
+    };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    for (const p of rows) {
+      const dept = await tx.department.findFirst({
+        where: { name: { equals: p.department.trim(), mode: "insensitive" } },
+      });
+      if (!dept) throw new Error("Department missing during import");
+      const { eligibilities } = mapImportEligibilities(
+        p.eligibilities,
+        coursesByName,
+      );
+      await tx.paper.create({
+        data: paperImportCreateData(semesterId, p, dept.id, eligibilities),
+      });
+    }
+  });
+
+  await logAdminAction(
+    "PAPER_IMPORTED",
+    `Imported ${rows.length} official catalogue papers (sem ${catalogueSemesterNumber})`,
+    "Semester",
+    semesterId,
+  );
+  revalidatePath("/admin/papers");
+  return {
+    ok: true,
+    message: `Imported ${rows.length} papers from official catalogue (semester ${catalogueSemesterNumber}).`,
+  };
+}
+
 export async function importPapers(
   semesterId: string,
   jsonText: string
@@ -218,35 +338,11 @@ export async function importPapers(
   }
 
   const coursesByName = await loadCoursesByName();
-  const errors: string[] = [];
-
-  for (let i = 0; i < parsed.data.length; i++) {
-    const row = parsed.data[i];
-    const rowLabel = `Row ${i + 1} (${row.paperName})`;
-    const dept = await findDepartmentByName(row.department);
-    if (!dept) {
-      errors.push(`${rowLabel}: Unknown department "${row.department}"`);
-      continue;
-    }
-    const { error: eligError } = mapImportEligibilities(
-      row.eligibilities,
-      coursesByName
-    );
-    if (eligError) {
-      errors.push(`${rowLabel}: ${eligError}`);
-    }
-    const dup = await prisma.paper.findFirst({
-      where: {
-        semesterId,
-        paperType: row.paperType,
-        paperName: row.paperName.trim(),
-        departmentId: dept.id,
-      },
-    });
-    if (dup) {
-      errors.push(`${rowLabel}: Paper already exists in this semester`);
-    }
-  }
+  const errors = await validateImportRows(
+    semesterId,
+    parsed.data,
+    coursesByName,
+  );
 
   if (errors.length > 0) {
     return {
@@ -268,16 +364,7 @@ export async function importPapers(
         coursesByName
       );
       await tx.paper.create({
-        data: {
-          semesterId,
-          paperType: p.paperType,
-          paperName: p.paperName.trim(),
-          paperCode: p.paperCode,
-          departmentId: dept.id,
-          sourceDocumentUrl: p.sourceDocumentUrl,
-          eligibilityNotes: p.eligibilityNotes,
-          eligibilities: { create: eligibilities },
-        },
+        data: paperImportCreateData(semesterId, p, dept.id, eligibilities),
       });
     }
   });

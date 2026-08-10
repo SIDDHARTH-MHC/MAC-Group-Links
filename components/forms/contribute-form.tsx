@@ -13,16 +13,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { submitGroupContribution } from "@/lib/actions/public";
+import { formatCombinationLabel } from "@/lib/courses/mac";
+import { isBaProgrammeCourseName } from "@/lib/preferences/course-year";
 import { ContributorType, GroupPlatform } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
 export function ContributeForm({
   papers,
   courses,
+  baCombinations,
   initialPaperId,
 }: {
   papers: { id: string; paperName: string; paperType: string }[];
   courses: Course[];
+  baCombinations: string[];
   initialPaperId?: string;
 }) {
   const searchParams = useSearchParams();
@@ -33,6 +37,7 @@ export function ContributeForm({
   >("mine");
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
+  const [combination, setCombination] = useState("");
   const [extraEligibilities, setExtraEligibilities] = useState<
     { courseId: string; year: string }[]
   >([{ courseId: "", year: "2" }]);
@@ -58,9 +63,14 @@ export function ContributeForm({
     try {
       const raw = localStorage.getItem("mac-group-links-prefs");
       if (!raw) return;
-      const prefs = JSON.parse(raw) as { courseId: string; year: number };
+      const prefs = JSON.parse(raw) as {
+        courseId: string;
+        year: number;
+        combination?: string | null;
+      };
       setCourseId(prefs.courseId);
       setYear(String(prefs.year));
+      if (prefs.combination) setCombination(prefs.combination);
     } catch {
       /* ignore */
     }
@@ -69,6 +79,9 @@ export function ContributeForm({
   useEffect(() => {
     if (appliesMode === "mine") applyMinePrefs();
   }, [appliesMode]);
+
+  const selectedCourse = courses.find((c) => c.id === courseId);
+  const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
   function submit() {
     if (!paperId) {
@@ -89,6 +102,7 @@ export function ContributeForm({
               {
                 courseId: courseId || undefined,
                 year: Number(year),
+                combination: combination || undefined,
               },
             ];
 
@@ -192,6 +206,24 @@ export function ContributeForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+      )}
+
+      {showCombination && (appliesMode === "select" || appliesMode === "mine") && (
+        <div>
+          <Label>Combination (optional)</Label>
+          <Select value={combination} onValueChange={(v) => setCombination(v ?? "")}>
+            <SelectTrigger>
+              <SelectValue placeholder="B.A. Programme combination" />
+            </SelectTrigger>
+            <SelectContent>
+              {baCombinations.map((combo) => (
+                <SelectItem key={combo} value={combo}>
+                  {formatCombinationLabel(combo)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

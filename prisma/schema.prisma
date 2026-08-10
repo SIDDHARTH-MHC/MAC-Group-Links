@@ -19,6 +19,7 @@ enum PaperType {
   DSE
   AEC
   CORE
+  SBC
 }
 
 enum GroupPlatform {
@@ -138,6 +139,12 @@ model Paper {
   paperType         PaperType
   paperName         String
   paperCode         String?
+  dseNumber         String?
+  seatCapacity      Int?
+  prerequisite      String?
+  sourceDocument    String?
+  sourcePage        Int?
+  sourceText        String?
   description       String?
   sourceDocumentUrl String?
   eligibilityNotes  String?

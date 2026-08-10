@@ -1,0 +1,32 @@
+{
+  "courses": [
+    { "name": "B.A. Programme", "shortName": "BA Prog" },
+    { "name": "B.Com. (Hons.)", "shortName": "B.Com(H)" },
+    { "name": "English (Hons.)", "shortName": "Eng Hons" },
+    { "name": "Hindi (Hons.)", "shortName": "Hindi Hons" },
+    { "name": "B.B.E. — Bachelor of Business Economics", "shortName": "BBE" },
+    { "name": "Journalism (Hons.)", "shortName": "Journ Hons" },
+    { "name": "Political Science (Hons.)", "shortName": "Pol Sc Hons" },
+    { "name": "B.Sc. Mathematical Sciences", "shortName": "BSc MS" },
+    { "name": "B.Sc. Physical Sciences", "shortName": "BSc PS" },
+    { "name": "Electronics (Hons.)", "shortName": "Electronics H" }
+  ],
+  "baProgrammeCombinations": [
+    "English + Economics",
+    "English + History",
+    "English + Mathematics",
+    "English + Political Science",
+    "Hindi + Economics",
+    "Hindi + History",
+    "Hindi + Mathematics",
+    "Hindi + Political Science",
+    "Computer + Economics",
+    "Computer + History",
+    "Computer + Mathematics",
+    "Computer + Political Science",
+    "OMSP + Economics",
+    "OMSP + History",
+    "OMSP + Mathematics",
+    "OMSP + Political Science"
+  ]
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useState, useTransition } from "react";
 import {
   createPaper,
   deletePaper,
@@ -110,6 +110,9 @@ export function PaperAdminClient({
           onChange={(e) => setImportJson(e.target.value)}
           placeholder='[{"paperType":"SEC","paperName":"IT Skills and Data Analysis 1","department":"Economics","eligibilities":[{"course":"BA Programme","year":2}]}]'
         />
+        <Button asChild variant="secondary" className="mt-2 mr-2">
+          <Link href="/admin/papers/import">Import from official PDF extract</Link>
+        </Button>
         <Button
           className="mt-2"
           variant="secondary"

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getActiveSemester } from "@/lib/db/semester";
 import { prisma } from "@/lib/db/prisma";
 import { getCourses } from "@/lib/actions/public";
+import { BA_PROGRAMME_COMBINATIONS } from "@/lib/courses/mac";
 import { ContributeForm } from "@/components/forms/contribute-form";
 
 type Props = { searchParams: Promise<{ paperId?: string }> };
@@ -39,6 +40,7 @@ export default async function ContributePage({ searchParams }: Props) {
           <ContributeForm
             papers={papers}
             courses={courses}
+            baCombinations={BA_PROGRAMME_COMBINATIONS}
             initialPaperId={sp.paperId}
           />
         </Suspense>

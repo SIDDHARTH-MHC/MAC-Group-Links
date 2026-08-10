@@ -43,6 +43,19 @@ Use `DATABASE_URL="postgresql://mac:mac@localhost:5433/mac_group_links?schema=pu
 
 Never commit `.env.local` or real credentials.
 
+## MAC courses (master list)
+
+Canonical courses live in `prisma/data/courses.json` (10 programmes — **not** one course per B.A. combination).
+
+- **B.A. Programme** uses the separate **`combination`** field on eligibility (e.g. `English + Economics`, `OMSP + Mathematics`). In the UI, OMSP combinations display as **Commerce + …** (same stream; MAC now also calls this Commerce).
+- Other courses: B.Com. (Hons.), English (Hons.), Hindi (Hons.), B.B.E., Journalism (Hons.), Political Science (Hons.), B.Sc. Mathematical Sciences, B.Sc. Physical Sciences, Electronics (Hons.).
+
+Update production DB courses without re-seeding papers:
+
+```bash
+npm run db:seed-courses
+```
+
 ## Admin
 
 - Login: `/admin/login`
@@ -61,6 +74,28 @@ Never commit `.env.local` or real credentials.
 | `npm run db:migrate:dev` | Create/apply migrations (dev) |
 | `npm run db:migrate` | Apply migrations (production) |
 | `npm run db:seed` | Load dev courses, semester, papers, sample groups |
+
+## Official catalogue (PDF → JSON)
+
+Reference PDFs (do not edit):
+
+- `prisma/data/reference/Optional Paper List Sem 1.pdf`
+- `prisma/data/reference/SEM 3,5,7 (1).pdf`
+
+Extract structured data:
+
+```bash
+npm run catalogue:extract
+```
+
+Outputs:
+
+- `prisma/data/papers-official.json` — import source (papers + eligibility + source page; **no groups**)
+- `docs/catalogue-extraction-report.md` — counts, review flags, DSE coverage notes
+
+Admin: **Paper catalogue → Import from official PDF extract** — preview by catalogue semester (1/3/5/7), then confirm import into the selected DB semester.
+
+Re-run `catalogue:extract` when MAC publishes new PDFs; adjust `scripts/extract_official_catalogue.py` if layout changes.
 
 ## Deploy (Vercel)
 

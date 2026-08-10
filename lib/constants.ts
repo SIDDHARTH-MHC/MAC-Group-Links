@@ -10,6 +10,7 @@ export const PAPER_TYPE_LABELS: Record<
   DSE: { short: "DSE", title: "Discipline Specific Electives" },
   AEC: { short: "AEC", title: "Ability Enhancement Courses" },
   CORE: { short: "CORE", title: "Core Papers" },
+  SBC: { short: "SBC", title: "Skill Based Course (Sem 7)" },
 };
 
 export const PAPER_TYPES = Object.keys(PAPER_TYPE_LABELS) as PaperType[];
