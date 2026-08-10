@@ -20,7 +20,22 @@ OUT_REPORT = ROOT / "docs/timetable-prefill-report.md"
 DEFAULT_PDFS = [
     Path.home() / "Downloads/secodd2026.pdf",
     Path.home() / "Downloads/vacodd2026.pdf",
+    Path.home() / "Downloads/ge 2026.pdf",
 ]
+
+SLOT_RE = re.compile(
+    r"(?:LAB_|L_)(\d+)\.\s*"
+    r"([A-Z]{3})-(SEC|VAC|GE)_([^_]+?)_(.+?)-([A-Z]{2,4}_[A-Z0-9]+)_+"
+)
+
+GE_SLOT_RE = re.compile(
+    r"(?:LAB_|L_|T_)(\d+)\.\s*"
+    r"([A-Z]{2,4})-(GE\d)_((?:[A-Z]{2,4}_)?[A-Z0-9&]+?)_(.+?)-([A-Z]{2,4}_[A-Z0-9]+)_+"
+)
+
+GE_SLOT_INLINE_RE = re.compile(
+    r"LAB_([A-Z]{2,4})-(GE\d)_((?:[A-Z]{2,4}_)?[A-Z0-9&]+?)_(.+?)-([A-Z]{2,4}_[A-Z0-9]+)_+"
+)
 
 DAY_BLOCKS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 TIMES = [
@@ -34,11 +49,6 @@ TIMES = [
     "3:00 PM",
     "4:00 PM",
 ]
-
-SLOT_RE = re.compile(
-    r"(?:LAB_|L_)(\d+)\.\s*"
-    r"([A-Z]{3})-(SEC|VAC|GE)_([^_]+?)_(.+?)-([A-Z]{2,4}_[A-Z0-9]+)_+"
-)
 
 
 def parse_slot_tail(tail: str) -> tuple[str | None, str]:
@@ -159,18 +169,22 @@ def parse_legend(text: str) -> dict[str, dict[str, object]]:
     return out
 
 
-def split_day_blocks(text: str) -> list[tuple[str | None, list[tuple]]]:
+def split_day_blocks(text: str, slot_re: re.Pattern[str]) -> list[tuple[str | None, list[tuple]]]:
     text = re.sub(r"Welcome Your IP Address.*?\n", "", text)
     text = re.sub(r"Principal Convener.*", "", text, flags=re.DOTALL)
-    parts = re.split(r"(?=LAB_1\.)", text)
-    parts = [p for p in parts if p.startswith("LAB_1")]
+    anchor = r"(?=LAB_1\.)" if slot_re is SLOT_RE else r"(?=L_1\.)"
+    parts = re.split(anchor, text)
+    start_prefix = "LAB_1." if slot_re is SLOT_RE else "L_1."
+    parts = [p for p in parts if p.startswith(start_prefix)]
+    if not parts:
+        return [(None, slot_re.findall(text))]
     if len(parts) == 5:
         day_labels = DAY_BLOCKS
     elif len(parts) == 4:
         day_labels = DAY_BLOCKS[:4]
     else:
-        return [(None, SLOT_RE.findall(text))]
-    return list(zip(day_labels, [SLOT_RE.findall(p) for p in parts]))
+        day_labels = [DAY_BLOCKS[i % len(DAY_BLOCKS)] for i in range(len(parts))]
+    return list(zip(day_labels, [slot_re.findall(p) for p in parts]))
 
 
 def catalogue_name_for_code(paper_type: str, code: str) -> str | None:
@@ -181,13 +195,20 @@ def catalogue_name_for_code(paper_type: str, code: str) -> str | None:
     return None
 
 
+def clean_timetable_title(title: str) -> str:
+    t = re.sub(r"\s+", " ", title.replace("\n", " ")).strip()
+    t = re.sub(r"_(L|T|P|LAB)(,.*)?$", "", t, flags=re.I)
+    t = re.sub(r"_+", " ", t)
+    return t.strip()
+
+
 def match_catalogue_name(
     paper_type: str, code: str, timetable_title: str, cat_names: list[str]
 ) -> str | None:
     direct = catalogue_name_for_code(paper_type, code)
     if direct and direct in cat_names:
         return direct
-    nt = norm(timetable_title)
+    nt = norm(clean_timetable_title(timetable_title))
     for name in cat_names:
         if norm(name) == nt:
             return name
@@ -204,6 +225,13 @@ def match_catalogue_name(
         if score >= 3 and score > best_score:
             best_score = score
             best = name
+    if paper_type == "GE" and not best:
+        for name in cat_names:
+            nw = set(norm(name).split())
+            score = len(tw & nw)
+            if score >= 2 and score > best_score:
+                best_score = score
+                best = name
     return best
 
 
@@ -228,10 +256,24 @@ class SlotRow:
     timetable_title: str
 
 
+def is_ge_timetable(text: str) -> bool:
+    if re.search(r"Department\s*:\s*GE\b", text):
+        return bool(re.search(r"-GE\d_", text))
+    return bool(re.search(r"-GE\d_", text))
+
+
 def extract_pdf(path: Path) -> tuple[str, list[SlotRow], dict]:
     text = "\n".join((page.extract_text() or "") for page in PdfReader(str(path)).pages)
     header = re.search(r"Department\s*:\s*(\w+)", text)
-    paper_type = header.group(1) if header else "?"
+    header_label = header.group(1) if header else "?"
+
+    if header_label == "VAC" and "geodd" in path.name.lower():
+        return "VAC_SKIP", [], {}
+
+    if is_ge_timetable(text):
+        return extract_ge_pdf(text)
+
+    paper_type = header_label
     if paper_type not in ("SEC", "VAC", "GE"):
         if "-SEC_" in text:
             paper_type = "SEC"
@@ -239,7 +281,7 @@ def extract_pdf(path: Path) -> tuple[str, list[SlotRow], dict]:
             paper_type = "VAC"
     legend = parse_legend(text)
     rows: list[SlotRow] = []
-    for day, slots in split_day_blocks(text):
+    for day, slots in split_day_blocks(text, SLOT_RE):
         for lab_no, dept, ptype, code, tail, tcode in slots:
             if ptype != paper_type:
                 continue
@@ -249,10 +291,7 @@ def extract_pdf(path: Path) -> tuple[str, list[SlotRow], dict]:
             end = TIMES[lab_i] if 1 <= lab_i < len(TIMES) else None
             tt_title = title_from_legend(legend, tcode) or f"{dept}-{ptype}_{code}"
             teacher = legend.get(tcode, {}).get("teacherName")
-            if isinstance(teacher, str):
-                teacher_name: str | None = teacher
-            else:
-                teacher_name = None
+            teacher_name = teacher if isinstance(teacher, str) else None
             rows.append(
                 SlotRow(
                     paper_type=ptype,
@@ -268,6 +307,51 @@ def extract_pdf(path: Path) -> tuple[str, list[SlotRow], dict]:
                 )
             )
     return paper_type, rows, legend
+
+
+def extract_ge_pdf(text: str) -> tuple[str, list[SlotRow], dict]:
+    legend = parse_legend(text)
+    rows: list[SlotRow] = []
+
+    def add_row(
+        lab_no: str,
+        dept: str,
+        ge_level: str,
+        code: str,
+        tail: str,
+        tcode: str,
+        day: str | None,
+    ) -> None:
+        section_name, room = parse_slot_tail(tail)
+        lab_i = int(lab_no) if lab_no.isdigit() else 1
+        start = TIMES[lab_i - 1] if 1 <= lab_i <= len(TIMES) else None
+        end = TIMES[lab_i] if 1 <= lab_i < len(TIMES) else None
+        tt_title = title_from_legend(legend, tcode) or f"{dept}-{ge_level}_{code}"
+        teacher = legend.get(tcode, {}).get("teacherName")
+        teacher_name = teacher if isinstance(teacher, str) else None
+        rows.append(
+            SlotRow(
+                paper_type="GE",
+                course_code=f"{dept}-{ge_level}_{code}",
+                code=code,
+                section_name=section_name,
+                teacher_name=teacher_name,
+                actual_class_room=clean_room(room),
+                day=day,
+                start_time=start,
+                end_time=end,
+                timetable_title=tt_title,
+            )
+        )
+
+    for day, slots in split_day_blocks(text, GE_SLOT_RE):
+        for lab_no, dept, ge_level, code, tail, tcode in slots:
+            add_row(lab_no, dept, ge_level, code, tail, tcode, day)
+
+    for dept, ge_level, code, tail, tcode in GE_SLOT_INLINE_RE.findall(text):
+        add_row("1", dept, ge_level, code, tail, tcode, None)
+
+    return "GE", rows, legend
 
 
 def aggregate(rows: list[SlotRow]) -> list[dict]:
@@ -336,11 +420,18 @@ def main() -> None:
 
     all_rows: list[SlotRow] = []
     sources: list[str] = []
+    skipped: list[str] = []
     for path in paths:
         if not path.is_file():
             print("skip missing", path)
             continue
         ptype, rows, _ = extract_pdf(path)
+        if ptype == "VAC_SKIP":
+            skipped.append(
+                f"{path.name} — header says VAC (same content as vacodd2026.pdf); "
+                "use `ge 2026.pdf` for Generic Elective (GE)."
+            )
+            continue
         sources.append(f"{path.name} ({ptype}, {len(rows)} slots)")
         all_rows.extend(rows)
 
@@ -380,15 +471,16 @@ def main() -> None:
 
     # Catalogue odd-sem SEC/VAC not appearing in timetable PDFs
     not_in_timetable: dict[str, list[str]] = {}
-    for ptype in ("SEC", "VAC"):
+    for ptype in ("SEC", "VAC", "GE"):
         in_cat = set(cat_by_type.get(ptype, []))
         in_tt = {name for t, name in matched_catalogue if t == ptype}
         not_in_timetable[ptype] = sorted(in_cat - in_tt)
 
     payload = {
         "academicYear": "2026-27",
-        "semesterNote": "Odd semester timetable exports (SEC + VAC PDFs)",
+        "semesterNote": "Odd semester timetable exports (SEC, VAC, GE PDFs)",
         "sources": sources,
+        "skippedFiles": skipped,
         "prefill": prefill,
         "missingInCatalogue": missing_in_catalogue,
         "catalogueNotInTimetable": not_in_timetable,
@@ -404,19 +496,27 @@ def main() -> None:
         *[f"- {s}" for s in sources],
         "",
         "## Note on geodd2026.pdf",
-        "`geodd2026.pdf` in Downloads is labeled **VAC** in the PDF header (same as `vacodd2026.pdf`), not GE. "
-        "No GE odd-2026 timetable was processed unless you provide a PDF whose slots use `GE_` codes.",
-        "",
-        f"## Prefill rows: {len(prefill)}",
-        f"## Timetable course codes not matched to catalogue: {len(missing_in_catalogue)}",
+        "`geodd2026.pdf` is **not** the GE timetable — the PDF header says **VAC** (duplicate of `vacodd2026.pdf`).",
+        "For **Generic Elective (GE) odd 2026–27**, use **`ge 2026.pdf`** in Downloads (Department: GE, slots like `POL-GE8_…`).",
         "",
     ]
+    if skipped:
+        lines.append("## Skipped files")
+        lines.extend(f"- {s}" for s in skipped)
+        lines.append("")
+    lines.extend(
+        [
+            f"## Prefill rows: {len(prefill)}",
+            f"## Timetable course codes not matched to catalogue: {len(missing_in_catalogue)}",
+            "",
+        ]
+    )
     for item in missing_in_catalogue:
         lines.append(
             f"- **{item['paperType']}** `{item['courseCode']}` — {item['timetableTitle']}"
         )
     lines.extend(["", "## Catalogue papers not seen in these timetables", ""])
-    for ptype in ("SEC", "VAC"):
+    for ptype in ("SEC", "VAC", "GE"):
         lines.append(f"### {ptype} ({len(not_in_timetable[ptype])})")
         for name in not_in_timetable[ptype][:40]:
             lines.append(f"- {name}")

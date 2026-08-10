@@ -52,7 +52,9 @@ export function MacCourseSelect({
   comboSelectId,
   hideCombination = false,
 }: MacCourseSelectProps) {
-  const safeCourseId = courses.some((c) => c.id === courseId) ? courseId : null;
+  const safeCourseId = courses.some((c) => c.id === courseId)
+    ? courseId
+    : undefined;
   const safeYear = MAC_YEARS.some((y) => String(y.value) === year)
     ? year
     : String(MAC_YEARS[1]?.value ?? 2);
@@ -62,7 +64,7 @@ export function MacCourseSelect({
       combination as (typeof BA_PROGRAMME_COMBINATIONS)[number],
     )
       ? combination
-      : null;
+      : undefined;
 
   const selectedCourse = courses.find((c) => c.id === safeCourseId);
   const showCombination =
@@ -155,7 +157,9 @@ export function MacCourseYearRow({
   coursePlaceholder?: string;
   yearPlaceholder?: string;
 }) {
-  const safeCourseId = courses.some((c) => c.id === courseId) ? courseId : null;
+  const safeCourseId = courses.some((c) => c.id === courseId)
+    ? courseId
+    : undefined;
   const safeYear = MAC_YEARS.some((y) => String(y.value) === year)
     ? year
     : String(MAC_YEARS[1]?.value ?? 2);

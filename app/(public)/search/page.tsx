@@ -25,13 +25,19 @@ export default function SearchPage() {
   useEffect(() => {
     const t = setTimeout(() => {
       startTransition(async () => {
-        const params = new URLSearchParams();
-        if (q.trim()) params.set("q", q.trim());
-        router.replace(`/search?${params.toString()}`, { scroll: false });
-        if (!q.trim()) {
+        const trimmed = q.trim();
+        const current = searchParams.get("q") ?? "";
+        if (trimmed !== current) {
+          const params = new URLSearchParams();
+          if (trimmed) params.set("q", trimmed);
+          const qs = params.toString();
+          router.replace(qs ? `/search?${qs}` : "/search", { scroll: false });
+        }
+        if (!trimmed) {
           setResults([]);
           return;
         }
+        const params = new URLSearchParams({ q: trimmed });
         const res = await fetch(`/api/search?${params.toString()}`);
         if (res.ok) {
           setResults(await res.json());
@@ -39,7 +45,7 @@ export default function SearchPage() {
       });
     }, 300);
     return () => clearTimeout(t);
-  }, [q, router]);
+  }, [q, router, searchParams]);
 
   return (
     <div className="space-y-6">
@@ -50,7 +56,6 @@ export default function SearchPage() {
         </p>
       </div>
       <MacSearchBar
-        key={initial}
         value={q}
         onChange={setQ}
         placeholder="Search papers, teachers or departments"

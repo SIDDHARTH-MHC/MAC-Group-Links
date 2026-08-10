@@ -40,18 +40,37 @@ function normalizePrefs(raw: unknown): CourseYearPrefs | null {
   };
 }
 
+let cachedRaw: string | null | undefined;
+let cachedPrefs: CourseYearPrefs | null = null;
+
+function invalidatePrefsCache() {
+  cachedRaw = undefined;
+}
+
 function readPrefs(): CourseYearPrefs | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
+    if (raw === cachedRaw) {
+      return cachedPrefs;
+    }
+    cachedRaw = raw;
+    if (!raw) {
+      cachedPrefs = null;
+      return null;
+    }
     const parsed = normalizePrefs(JSON.parse(raw));
     if (!parsed) {
       localStorage.removeItem(STORAGE_KEY);
+      cachedPrefs = null;
+      return null;
     }
-    return parsed;
+    cachedPrefs = parsed;
+    return cachedPrefs;
   } catch {
     localStorage.removeItem(STORAGE_KEY);
+    cachedRaw = null;
+    cachedPrefs = null;
     return null;
   }
 }
@@ -66,8 +85,12 @@ export function prefsCourseMissing(
 }
 
 function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
+  const onStoreChange = () => {
+    invalidatePrefsCache();
+    callback();
+  };
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
 }
 
 export function useCourseYearPrefs() {
@@ -78,6 +101,7 @@ export function useCourseYearPrefs() {
   );
 
   const setPrefs = useCallback((next: CourseYearPrefs | null) => {
+    invalidatePrefsCache();
     if (next) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } else {
