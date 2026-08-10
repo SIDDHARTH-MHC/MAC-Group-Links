@@ -85,19 +85,6 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
     );
   }
 
-  if (!prefs && !editing) {
-    return (
-      <div className="mx-auto max-w-[640px] rounded-xl border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
-        <p className="text-muted-foreground">
-          Select your course and year to get personalized results.
-        </p>
-        <Button className="mt-4" size="lg" onClick={() => setEditing(true)}>
-          Select Course
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-[640px] space-y-4 rounded-xl border border-border bg-card p-5">
       <MacCourseSelect
@@ -116,6 +103,7 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
         <Button
           className="flex-1"
           size="lg"
+          disabled={!courseId}
           onClick={() => {
             const course = courses.find((c) => c.id === courseId);
             if (!course) return;

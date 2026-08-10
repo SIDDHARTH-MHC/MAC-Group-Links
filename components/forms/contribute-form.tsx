@@ -107,24 +107,6 @@ export function ContributeForm({
   );
   const [pending, startTransition] = useTransition();
 
-  function applyMinePrefs() {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem("mac-group-links-prefs");
-      if (!raw) return;
-      const prefs = JSON.parse(raw) as {
-        courseId: string;
-        year: number;
-        combination?: string | null;
-      };
-      setCourseId(prefs.courseId);
-      setYear(String(prefs.year));
-      if (prefs.combination) setCombination(prefs.combination);
-    } catch {
-      /* ignore */
-    }
-  }
-
   function applyTimetablePrefill(paper: { paperName: string } | undefined) {
     if (!paperType || !paper) {
       setTimetableHint(false);
@@ -281,11 +263,6 @@ export function ContributeForm({
         multi={multiAudience}
         onMultiChange={setMultiAudience}
         heading="Who is this group for?"
-        showMineHint
-        onLoadMine={() => {
-          setAudienceMode("single");
-          applyMinePrefs();
-        }}
       />
 
       <div className="space-y-1.5">

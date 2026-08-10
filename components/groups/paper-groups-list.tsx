@@ -63,11 +63,7 @@ export function PaperGroupsList({
             No groups match your course selection.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Update{" "}
-            <Link href="/my-course" className="text-primary underline-offset-2 hover:underline">
-              My Course
-            </Link>{" "}
-            to see the right group, or clear filters above.
+            Try clearing filters above, or browse all groups for this paper.
           </p>
         </div>
       );
@@ -97,10 +93,7 @@ export function PaperGroupsList({
           <span className="font-medium text-foreground">
             {formatPrefsLabel(prefs)}
           </span>
-          .{" "}
-          <Link href="/my-course" className="text-primary underline-offset-2 hover:underline">
-            Change
-          </Link>
+          .
         </p>
       )}
       {visible.map((group) => (

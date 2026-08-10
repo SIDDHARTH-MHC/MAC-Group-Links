@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -197,8 +196,6 @@ export function EligibilityAudienceFields({
   multi,
   onMultiChange,
   heading = "Who is this for?",
-  showMineHint,
-  onLoadMine,
 }: EligibilityAudienceFieldsProps) {
   const modeMeta = MODE_OPTIONS.find((o) => o.value === mode);
   const baCourseId = findBaCourseId(courses);
@@ -270,11 +267,13 @@ export function EligibilityAudienceFields({
 
       {mode === "single" ? (
         <>
+          {/* Load from My Course — disabled for now
           {showMineHint && onLoadMine && !courseId ? (
             <Button type="button" variant="secondary" size="sm" onClick={onLoadMine}>
               Load from My Course
             </Button>
           ) : null}
+          */}
           <MacCourseSelect
             courses={courses}
             courseId={courseId}

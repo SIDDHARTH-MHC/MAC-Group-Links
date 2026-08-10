@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const links = [
   { href: "/", label: "Home" },
@@ -34,6 +33,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          {/* My Course — disabled for now
           <Button
             asChild
             variant="outline"
@@ -42,6 +42,7 @@ export function SiteHeader() {
           >
             <Link href="/my-course">My Course</Link>
           </Button>
+          */}
           <Link
             href="/search"
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground md:hidden"

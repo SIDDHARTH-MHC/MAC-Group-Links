@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, GraduationCap, PlusCircle, Menu } from "lucide-react";
+import { Home, Search, PlusCircle, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/my-course", label: "My Course", icon: GraduationCap },
+  // { href: "/my-course", label: "My Course", icon: GraduationCap },
   { href: "/contribute", label: "Contribute", icon: PlusCircle },
   { href: "/more", label: "More", icon: Menu },
 ];
