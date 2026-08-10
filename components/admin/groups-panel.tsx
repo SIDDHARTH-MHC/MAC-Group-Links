@@ -91,7 +91,15 @@ export function AdminGroupsPanel({
               onValueChange={(v) => setCourseId(!v || v === "all" ? "" : v)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="All students" />
+                <span
+                  className={
+                    courseId
+                      ? "truncate text-sm"
+                      : "truncate text-sm text-muted-foreground"
+                  }
+                >
+                  {courses.find((c) => c.id === courseId)?.name ?? "All students"}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All students</SelectItem>

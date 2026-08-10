@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getActiveSemester } from "@/lib/db/semester";
 import { PaperTypeGrid } from "@/components/papers/paper-type-grid";
 import { MacSearchBar } from "@/components/ui/mac-search-bar";
-import { CoursePrefsCard } from "@/components/layout/course-prefs-card";
+// import { CoursePrefsCard } from "@/components/layout/course-prefs-card";
 import { cnSemesterLabel } from "@/lib/constants";
 
 export default async function HomePage() {
@@ -36,9 +36,11 @@ export default async function HomePage() {
         </form>
       </section>
 
+      {/* Course/year prompt — disabled for now
       <div className="md:hidden">
         <CoursePrefsCard />
       </div>
+      */}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">

@@ -14,14 +14,21 @@ import {
 } from "@/components/ui/select";
 import { submitGroupContribution } from "@/lib/actions/public";
 import { PaperCombobox } from "@/components/forms/paper-combobox";
+import { ClassTimeRangeSelect } from "@/components/forms/class-time-range-select";
+import { ClassDaysSelect } from "@/components/forms/class-days-select";
 import {
   EligibilityAudienceFields,
   buildEligibilitySubmitRows,
   validateEligibilityAudience,
+  emptyMultiAudience,
   type AudienceMode,
-  type MultiEligibilityRow,
+  type MultiAudienceState,
 } from "@/components/forms/eligibility-audience-fields";
 import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES } from "@/lib/constants";
+import {
+  normalizePrefillEndTime,
+  normalizePrefillStartTime,
+} from "@/lib/constants/class-times";
 import { lookupTimetablePrefill } from "@/lib/timetable/prefill";
 import { ContributorType, GroupPlatform, type PaperType } from "@prisma/client";
 import type { Course } from "@prisma/client";
@@ -59,9 +66,8 @@ export function ContributeForm({
     ? paperId
     : "";
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
-  const [multiRows, setMultiRows] = useState<MultiEligibilityRow[]>([
-    { courseId: "", year: "2", combination: "" },
-  ]);
+  const [multiAudience, setMultiAudience] =
+    useState<MultiAudienceState>(emptyMultiAudience);
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
@@ -82,10 +88,12 @@ export function ContributeForm({
     () => initialPrefill?.actualClassRoom ?? "",
   );
   const [classDays, setClassDays] = useState(() => initialPrefill?.days ?? "");
-  const [startTime, setStartTime] = useState(
-    () => initialPrefill?.startTime ?? "",
+  const [startTime, setStartTime] = useState(() =>
+    normalizePrefillStartTime(initialPrefill?.startTime),
   );
-  const [endTime, setEndTime] = useState(() => initialPrefill?.endTime ?? "");
+  const [endTime, setEndTime] = useState(() =>
+    normalizePrefillEndTime(initialPrefill?.endTime),
+  );
   const [timetableHint, setTimetableHint] = useState(() => !!initialPrefill);
   const [sectionName, setSectionName] = useState(
     () => initialPrefill?.sectionName ?? "",
@@ -128,8 +136,8 @@ export function ContributeForm({
     setTeacherName(row.teacherName ?? "");
     setActualClassRoom(row.actualClassRoom ?? "");
     setClassDays(row.days ?? "");
-    setStartTime(row.startTime ?? "");
-    setEndTime(row.endTime ?? "");
+    setStartTime(normalizePrefillStartTime(row.startTime));
+    setEndTime(normalizePrefillEndTime(row.endTime));
     setSectionName(row.sectionName ?? "");
   }
 
@@ -155,8 +163,10 @@ export function ContributeForm({
     }
     const audErr = validateEligibilityAudience(
       audienceMode,
-      { courseId, year },
-      multiRows,
+      { courseId, year, combination },
+      multiAudience,
+      courses,
+      paperType,
     );
     if (audErr) {
       setMessage({ ok: false, text: audErr });
@@ -165,7 +175,9 @@ export function ContributeForm({
     const eligibilities = buildEligibilitySubmitRows(
       audienceMode,
       { courseId, year, combination },
-      multiRows,
+      multiAudience,
+      courses,
+      paperType,
     );
 
     startTransition(async () => {
@@ -257,6 +269,7 @@ export function ContributeForm({
 
       <EligibilityAudienceFields
         courses={courses}
+        paperType={paperType}
         mode={audienceMode}
         onModeChange={setAudienceMode}
         courseId={courseId}
@@ -265,8 +278,8 @@ export function ContributeForm({
         onYearChange={setYear}
         combination={combination}
         onCombinationChange={setCombination}
-        multiRows={multiRows}
-        onMultiRowsChange={setMultiRows}
+        multi={multiAudience}
+        onMultiChange={setMultiAudience}
         heading="Who is this group for?"
         showMineHint
         onLoadMine={() => {
@@ -297,32 +310,13 @@ export function ContributeForm({
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Class days (optional)</Label>
-          <Input
-            value={classDays}
-            onChange={(e) => setClassDays(e.target.value)}
-            placeholder="e.g. Monday, Wednesday"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Class time (optional)</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              placeholder="Start"
-              className="flex-1"
-            />
-            <span className="text-muted-foreground">–</span>
-            <Input
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              placeholder="End"
-              className="flex-1"
-            />
-          </div>
-        </div>
+        <ClassDaysSelect value={classDays} onChange={setClassDays} />
+        <ClassTimeRangeSelect
+          startTime={startTime}
+          endTime={endTime}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+        />
       </div>
 
       <div className="space-y-1.5">

@@ -23,8 +23,9 @@ import {
   EligibilityAudienceFields,
   buildEligibilitySubmitRows,
   validateEligibilityAudience,
+  emptyMultiAudience,
   type AudienceMode,
-  type MultiEligibilityRow,
+  type MultiAudienceState,
 } from "@/components/forms/eligibility-audience-fields";
 import { SuggestionSuccess } from "@/components/forms/suggestion-success";
 import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS, formatEligibility } from "@/lib/constants";
@@ -223,20 +224,24 @@ function EditSuggestionForm({
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
-  const [multiRows, setMultiRows] = useState<MultiEligibilityRow[]>([
-    { courseId: "", year: "2", combination: "" },
-  ]);
+  const [multiAudience, setMultiAudience] =
+    useState<MultiAudienceState>(emptyMultiAudience);
   const [suggestedCorrection, setSuggestedCorrection] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const editPaperType =
+    papers.find((p) => p.id === paperId)?.paperType ?? "SEC";
+
   function eligibilitySummary(): string {
     const rows = buildEligibilitySubmitRows(
       audienceMode,
       { courseId, year, combination },
-      multiRows,
+      multiAudience,
+      courses,
+      editPaperType,
     );
     if (rows[0]?.appliesToAll) {
       return "All students taking this paper";
@@ -278,8 +283,10 @@ function EditSuggestionForm({
     if (issue === "eligibility") {
       const audErr = validateEligibilityAudience(
         audienceMode,
-        { courseId, year },
-        multiRows,
+        { courseId, year, combination },
+        multiAudience,
+        courses,
+        editPaperType,
       );
       if (audErr) {
         setFieldError(audErr);
@@ -410,6 +417,7 @@ function EditSuggestionForm({
       {issue === "eligibility" ? (
         <EligibilityAudienceFields
           courses={courses}
+          paperType={editPaperType}
           mode={audienceMode}
           onModeChange={setAudienceMode}
           courseId={courseId}
@@ -418,8 +426,8 @@ function EditSuggestionForm({
           onYearChange={setYear}
           combination={combination}
           onCombinationChange={setCombination}
-          multiRows={multiRows}
-          onMultiRowsChange={setMultiRows}
+          multi={multiAudience}
+          onMultiChange={setMultiAudience}
           heading="Who should be eligible?"
         />
       ) : null}
@@ -495,9 +503,8 @@ function NewPaperSuggestionForm({
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
-  const [multiRows, setMultiRows] = useState<MultiEligibilityRow[]>([
-    { courseId: "", year: "2", combination: "" },
-  ]);
+  const [multiAudience, setMultiAudience] =
+    useState<MultiAudienceState>(emptyMultiAudience);
   const [notes, setNotes] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -519,8 +526,10 @@ function NewPaperSuggestionForm({
     }
     const audErr = validateEligibilityAudience(
       audienceMode,
-      { courseId, year },
-      multiRows,
+      { courseId, year, combination },
+      multiAudience,
+      courses,
+      paperType,
     );
     if (audErr) {
       setFieldError(audErr);
@@ -594,6 +603,7 @@ function NewPaperSuggestionForm({
 
       <EligibilityAudienceFields
         courses={courses}
+        paperType={paperType}
         mode={audienceMode}
         onModeChange={setAudienceMode}
         courseId={courseId}
@@ -602,8 +612,8 @@ function NewPaperSuggestionForm({
         onYearChange={setYear}
         combination={combination}
         onCombinationChange={setCombination}
-        multiRows={multiRows}
-        onMultiRowsChange={setMultiRows}
+        multi={multiAudience}
+        onMultiChange={setMultiAudience}
         heading="Who is this paper for?"
       />
 
@@ -633,7 +643,9 @@ function NewPaperSuggestionForm({
             const eligibilities = buildEligibilitySubmitRows(
               audienceMode,
               { courseId, year, combination },
-              multiRows,
+              multiAudience,
+              courses,
+              paperType,
             );
             const res = await submitNewPaperSuggestion({
               paperType,

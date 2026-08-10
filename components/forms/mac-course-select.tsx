@@ -1,12 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   BA_PROGRAMME_COMBINATIONS,
@@ -72,6 +72,15 @@ export function MacCourseSelect({
     isBaProgrammeCourseName(selectedCourse?.name) &&
     onCombinationChange;
 
+  useEffect(() => {
+    if (courseId && !courses.some((c) => c.id === courseId)) {
+      onCourseIdChange("");
+    }
+  }, [courseId, courses, onCourseIdChange]);
+
+  const yearLabelText =
+    MAC_YEARS.find((y) => String(y.value) === safeYear)?.label ?? yearLabel;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="space-y-1.5">
@@ -84,7 +93,13 @@ export function MacCourseSelect({
           }}
         >
           <SelectTrigger id={courseSelectId} className="w-full">
-            <SelectValue placeholder="Select course" />
+            <span
+              className={
+                selectedCourse ? "truncate text-sm" : "truncate text-sm text-muted-foreground"
+              }
+            >
+              {selectedCourse?.name ?? "Select course"}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {courses.map((c) => (
@@ -107,7 +122,17 @@ export function MacCourseSelect({
             onValueChange={(v) => onCombinationChange!(v ?? "")}
           >
             <SelectTrigger id={comboSelectId} className="w-full">
-              <SelectValue placeholder="Select combination" />
+              <span
+                className={
+                  safeCombination
+                    ? "truncate text-sm"
+                    : "truncate text-sm text-muted-foreground"
+                }
+              >
+                {safeCombination
+                  ? formatCombinationLabel(safeCombination)
+                  : "Select combination"}
+              </span>
             </SelectTrigger>
             <SelectContent>
               {BA_PROGRAMME_COMBINATIONS.map((combo) => (
@@ -124,7 +149,7 @@ export function MacCourseSelect({
         <Label htmlFor={yearSelectId}>{yearLabel}</Label>
         <Select value={safeYear} onValueChange={(v) => onYearChange(v ?? "2")}>
           <SelectTrigger id={yearSelectId} className="w-full">
-            <SelectValue />
+            <span className="truncate text-sm">{yearLabelText}</span>
           </SelectTrigger>
           <SelectContent>
             {MAC_YEARS.map((y) => (
@@ -164,6 +189,16 @@ export function MacCourseYearRow({
     ? year
     : String(MAC_YEARS[1]?.value ?? 2);
 
+  const selectedCourse = courses.find((c) => c.id === safeCourseId);
+  const yearLabelText =
+    MAC_YEARS.find((y) => String(y.value) === safeYear)?.label ?? yearPlaceholder;
+
+  useEffect(() => {
+    if (courseId && !courses.some((c) => c.id === courseId)) {
+      onCourseIdChange("");
+    }
+  }, [courseId, courses, onCourseIdChange]);
+
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5">
@@ -172,7 +207,15 @@ export function MacCourseYearRow({
           onValueChange={(v) => onCourseIdChange(v ?? "")}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={coursePlaceholder} />
+            <span
+              className={
+                selectedCourse
+                  ? "truncate text-sm"
+                  : "truncate text-sm text-muted-foreground"
+              }
+            >
+              {selectedCourse?.name ?? coursePlaceholder}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {courses.map((c) => (
@@ -186,7 +229,7 @@ export function MacCourseYearRow({
       <div className="space-y-1.5">
         <Select value={safeYear} onValueChange={(v) => onYearChange(v ?? "2")}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={yearPlaceholder} />
+            <span className="truncate text-sm">{yearLabelText}</span>
           </SelectTrigger>
           <SelectContent>
             {MAC_YEARS.map((y) => (

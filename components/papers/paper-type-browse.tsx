@@ -83,6 +83,9 @@ export function PaperTypeBrowse({
     return list;
   }, [papers, courseId, year]);
 
+  const selectedCourseName = courses.find((c) => c.id === courseId)?.name;
+  const selectedYearLabel = MAC_YEARS.find((y) => String(y.value) === year)?.label;
+
   const filterFields = (
     <div className="flex flex-col gap-3">
       <div>
@@ -111,7 +114,15 @@ export function PaperTypeBrowse({
           onValueChange={(v) => setCourseId(!v || v === "all" ? "" : v)}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any course" />
+            <span
+              className={
+                courseId
+                  ? "truncate text-sm"
+                  : "truncate text-sm text-muted-foreground"
+              }
+            >
+              {selectedCourseName ?? "Any course"}
+            </span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any course</SelectItem>
@@ -130,7 +141,15 @@ export function PaperTypeBrowse({
           onValueChange={(v) => setYear(!v || v === "all" ? "" : v)}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any year" />
+            <span
+              className={
+                year
+                  ? "truncate text-sm"
+                  : "truncate text-sm text-muted-foreground"
+              }
+            >
+              {selectedYearLabel ?? "Any year"}
+            </span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any year</SelectItem>
