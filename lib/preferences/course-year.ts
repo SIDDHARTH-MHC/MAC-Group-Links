@@ -17,15 +17,52 @@ export type CourseYearPrefs = EligibilityPrefs & {
   courseName: string;
 };
 
+function normalizePrefs(raw: unknown): CourseYearPrefs | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  if (typeof o.courseId !== "string" || !o.courseId.trim()) return null;
+  const year =
+    typeof o.year === "number" ? o.year : Number.parseInt(String(o.year), 10);
+  if (!Number.isInteger(year) || year < 1 || year > 4) return null;
+  const courseName =
+    typeof o.courseName === "string" && o.courseName.trim()
+      ? o.courseName.trim()
+      : "My course";
+  const combination =
+    typeof o.combination === "string" && o.combination.trim()
+      ? o.combination.trim()
+      : null;
+  return {
+    courseId: o.courseId,
+    courseName,
+    year,
+    combination,
+  };
+}
+
 function readPrefs(): CourseYearPrefs | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as CourseYearPrefs;
+    if (!raw) return null;
+    const parsed = normalizePrefs(JSON.parse(raw));
+    if (!parsed) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    return parsed;
   } catch {
+    localStorage.removeItem(STORAGE_KEY);
     return null;
   }
-  return null;
+}
+
+/** True when saved prefs reference a course id that is not in the current list. */
+export function prefsCourseMissing(
+  prefs: CourseYearPrefs | null,
+  courses: { id: string }[],
+): boolean {
+  if (!prefs) return false;
+  return !courses.some((c) => c.id === prefs.courseId);
 }
 
 function subscribe(callback: () => void) {

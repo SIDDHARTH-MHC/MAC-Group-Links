@@ -110,6 +110,19 @@ export async function searchPapers(semesterId: string, query: string) {
   });
 }
 
+export async function listCataloguePapersForSuggestions(semesterId: string) {
+  return prisma.paper.findMany({
+    where: { semesterId, archivedAt: null },
+    select: {
+      id: true,
+      paperName: true,
+      paperType: true,
+      department: { select: { name: true } },
+    },
+    orderBy: [{ paperType: "asc" }, { paperName: "asc" }],
+  });
+}
+
 export async function listPapersOpenForContribution(semesterId: string) {
   return prisma.paper.findMany({
     where: {

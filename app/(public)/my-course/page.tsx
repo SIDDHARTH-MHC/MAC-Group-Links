@@ -3,7 +3,12 @@ import { MyCourseForm } from "@/components/forms/my-course-form";
 import { MyCourseRelevantGroups } from "@/components/my-course/my-course-relevant";
 
 export default async function MyCoursePage() {
-  const courses = await getCourses();
+  let courses: Awaited<ReturnType<typeof getCourses>> = [];
+  try {
+    courses = await getCourses();
+  } catch (err) {
+    console.error("My Course: failed to load courses", err);
+  }
   return (
     <div className="space-y-8">
       <div>
@@ -14,7 +19,13 @@ export default async function MyCoursePage() {
           Optional preference saved on this device — no account needed.
         </p>
       </div>
-      <MyCourseForm courses={courses} />
+      {courses.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
+          Course list is temporarily unavailable. Reload the page in a moment.
+        </p>
+      ) : (
+        <MyCourseForm courses={courses} />
+      )}
       <MyCourseRelevantGroups />
     </div>
   );

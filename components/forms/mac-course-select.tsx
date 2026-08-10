@@ -52,7 +52,19 @@ export function MacCourseSelect({
   comboSelectId,
   hideCombination = false,
 }: MacCourseSelectProps) {
-  const selectedCourse = courses.find((c) => c.id === courseId);
+  const safeCourseId = courses.some((c) => c.id === courseId) ? courseId : null;
+  const safeYear = MAC_YEARS.some((y) => String(y.value) === year)
+    ? year
+    : String(MAC_YEARS[1]?.value ?? 2);
+  const safeCombination =
+    combination &&
+    BA_PROGRAMME_COMBINATIONS.includes(
+      combination as (typeof BA_PROGRAMME_COMBINATIONS)[number],
+    )
+      ? combination
+      : null;
+
+  const selectedCourse = courses.find((c) => c.id === safeCourseId);
   const showCombination =
     !hideCombination &&
     isBaProgrammeCourseName(selectedCourse?.name) &&
@@ -63,7 +75,7 @@ export function MacCourseSelect({
       <div className="space-y-1.5">
         <Label htmlFor={courseSelectId}>{courseLabel}</Label>
         <Select
-          value={courseId}
+          value={safeCourseId}
           onValueChange={(v) => {
             onCourseIdChange(v ?? "");
             if (onCombinationChange) onCombinationChange("");
@@ -89,7 +101,7 @@ export function MacCourseSelect({
             {combinationOptional ? " (optional)" : ""}
           </Label>
           <Select
-            value={combination}
+            value={safeCombination}
             onValueChange={(v) => onCombinationChange!(v ?? "")}
           >
             <SelectTrigger id={comboSelectId} className="w-full">
@@ -108,7 +120,7 @@ export function MacCourseSelect({
 
       <div className="space-y-1.5">
         <Label htmlFor={yearSelectId}>{yearLabel}</Label>
-        <Select value={year} onValueChange={(v) => onYearChange(v ?? "2")}>
+        <Select value={safeYear} onValueChange={(v) => onYearChange(v ?? "2")}>
           <SelectTrigger id={yearSelectId} className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -143,10 +155,18 @@ export function MacCourseYearRow({
   coursePlaceholder?: string;
   yearPlaceholder?: string;
 }) {
+  const safeCourseId = courses.some((c) => c.id === courseId) ? courseId : null;
+  const safeYear = MAC_YEARS.some((y) => String(y.value) === year)
+    ? year
+    : String(MAC_YEARS[1]?.value ?? 2);
+
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5">
-        <Select value={courseId} onValueChange={(v) => onCourseIdChange(v ?? "")}>
+        <Select
+          value={safeCourseId}
+          onValueChange={(v) => onCourseIdChange(v ?? "")}
+        >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={coursePlaceholder} />
           </SelectTrigger>
@@ -160,7 +180,7 @@ export function MacCourseYearRow({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Select value={year} onValueChange={(v) => onYearChange(v ?? "2")}>
+        <Select value={safeYear} onValueChange={(v) => onYearChange(v ?? "2")}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder={yearPlaceholder} />
           </SelectTrigger>

@@ -9,13 +9,14 @@ export type PaperOption = {
   id: string;
   paperName: string;
   paperType: string;
+  departmentName?: string;
 };
 
 export function PaperCombobox({
   papers,
   value,
   onValueChange,
-  placeholder = "Select paper…",
+  placeholder = "Search and select paper…",
   id,
   disabled = false,
   emptyMessage = "No papers found.",
@@ -37,7 +38,12 @@ export function PaperCombobox({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return papers;
-    return papers.filter((p) => p.paperName.toLowerCase().includes(q));
+    return papers.filter(
+      (p) =>
+        p.paperName.toLowerCase().includes(q) ||
+        p.paperType.toLowerCase().includes(q) ||
+        (p.departmentName?.toLowerCase().includes(q) ?? false),
+    );
   }, [papers, query]);
 
   useEffect(() => {
@@ -52,12 +58,7 @@ export function PaperCombobox({
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
-  useEffect(() => {
-    if (disabled) {
-      setOpen(false);
-      setQuery("");
-    }
-  }, [disabled]);
+  const panelOpen = open && !disabled;
 
   return (
     <div ref={rootRef} className="relative">
@@ -79,7 +80,16 @@ export function PaperCombobox({
       >
         <span className="truncate text-left">
           {selected ? (
-            selected.paperName
+            <span className="truncate">
+              <span className="text-muted-foreground">[{selected.paperType}]</span>{" "}
+              {selected.paperName}
+              {selected.departmentName ? (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {selected.departmentName}
+                </span>
+              ) : null}
+            </span>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
@@ -87,13 +97,13 @@ export function PaperCombobox({
         <ChevronsUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
       </button>
 
-      {open ? (
-        <div className="relative z-20 mt-2 overflow-hidden rounded-lg border border-border bg-popover shadow-md">
+      {panelOpen ? (
+        <div className="relative z-20 mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-md">
           <div className="border-b border-border p-2">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type to search paper name…"
+              placeholder="Search papers…"
               className="h-10"
               autoFocus
               aria-label="Search papers"
@@ -133,7 +143,15 @@ export function PaperCombobox({
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1 leading-snug">
+                      <span className="font-medium text-foreground">
+                        [{p.paperType}]
+                      </span>{" "}
                       {p.paperName}
+                      {p.departmentName ? (
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {p.departmentName}
+                        </span>
+                      ) : null}
                     </span>
                   </button>
                 </li>

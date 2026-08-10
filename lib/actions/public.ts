@@ -110,7 +110,11 @@ export async function submitGroupContribution(
 export async function submitSuggestion(input: unknown): Promise<ActionResult> {
   const parsed = suggestionSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    const issue = parsed.error.issues[0];
+    return {
+      ok: false,
+      error: issue?.message ?? "Please check the form and try again.",
+    };
   }
   const data = parsed.data;
   if (data.paperId) await assertPaperInActiveSemester(data.paperId);
@@ -139,7 +143,11 @@ export async function submitNewPaperSuggestion(
 ): Promise<ActionResult> {
   const parsed = newPaperSuggestionSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    const issue = parsed.error.issues[0];
+    return {
+      ok: false,
+      error: issue?.message ?? "Please check the form and try again.",
+    };
   }
   const data = parsed.data;
 
@@ -166,7 +174,7 @@ export async function submitNewPaperSuggestion(
     },
   });
 
-  return { ok: true, message: "Suggestion submitted successfully." };
+  return { ok: true, message: "Thanks! Your suggestion has been sent to the MAC Group Links admin for review." };
 }
 
 export async function submitGroupReport(input: unknown): Promise<ActionResult> {

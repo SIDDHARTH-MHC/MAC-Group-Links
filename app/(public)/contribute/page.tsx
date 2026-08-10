@@ -24,16 +24,16 @@ const options = [
 
 export default function ContributeHubPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Help your classmates
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
           Contributions are reviewed before they appear publicly. No login
           required.
         </p>
-      </div>
+      </header>
       <ul className="grid gap-4 sm:grid-cols-1">
         {options.map(({ href, title, description, icon: Icon }) => (
           <li key={href}>

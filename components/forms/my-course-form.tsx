@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  prefsCourseMissing,
   useCourseYearPrefs,
 } from "@/lib/preferences/course-year";
 import { formatCombinationLabel } from "@/lib/courses/mac";
@@ -20,6 +21,34 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
   if (!loaded) {
     return (
       <div className="h-40 animate-pulse rounded-xl border border-border bg-muted/40" />
+    );
+  }
+
+  const stalePrefs = prefsCourseMissing(prefs, courses);
+
+  if (stalePrefs) {
+    return (
+      <div className="mx-auto max-w-[640px] rounded-xl border border-amber-200 bg-amber-50 px-5 py-6 dark:border-amber-900 dark:bg-amber-950/40">
+        <p className="font-medium text-amber-950 dark:text-amber-100">
+          Your saved course needs to be selected again
+        </p>
+        <p className="mt-2 text-sm text-amber-900/90 dark:text-amber-100/90">
+          The site was updated and your previous choice no longer matches. Pick
+          your course and year again — nothing is stored on our servers.
+        </p>
+        <Button
+          className="mt-4"
+          onClick={() => {
+            setPrefs(null);
+            setCourseId("");
+            setYear("2");
+            setCombination("");
+            setEditing(true);
+          }}
+        >
+          Select course again
+        </Button>
+      </div>
     );
   }
 
@@ -42,7 +71,9 @@ export function MyCourseForm({ courses }: { courses: Course[] }) {
           variant="outline"
           className="mt-4"
           onClick={() => {
-            setCourseId(prefs.courseId);
+            setCourseId(
+              courses.some((c) => c.id === prefs.courseId) ? prefs.courseId : "",
+            );
             setYear(String(prefs.year));
             setCombination(prefs.combination ?? "");
             setEditing(true);

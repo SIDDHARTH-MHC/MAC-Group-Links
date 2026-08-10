@@ -39,13 +39,15 @@ export default async function ContributeAddPage({ searchParams }: Props) {
       : null;
 
   return (
-    <div className="mx-auto max-w-[640px] space-y-6">
-      <div>
-        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
+    <div className="w-full space-y-6">
+      <header className="space-y-2">
+        <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/contribute">← Back</Link>
         </Button>
-        <h1 className="text-2xl font-bold text-foreground">Add a Group Link</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          Add a Group Link
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
           Help your classmates find their class group.
         </p>
         {selectedPaper ? (
@@ -61,7 +63,7 @@ export default async function ContributeAddPage({ searchParams }: Props) {
             {blockedReason}. Only admin can change or remove the link.
           </p>
         ) : null}
-      </div>
+      </header>
       {papers.length === 0 ? (
         <p className="text-muted-foreground">
           Every paper in this semester already has a group link or one is pending

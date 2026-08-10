@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES, getPaperTypeLabel } from "@/lib/constants";
+import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES } from "@/lib/constants";
 
 export function PaperTypeGrid() {
   return (

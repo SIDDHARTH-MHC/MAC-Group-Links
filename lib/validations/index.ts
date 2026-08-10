@@ -47,7 +47,7 @@ export const groupContributionSchema = z.object({
 
 export const suggestionSchema = z.object({
   type: z.nativeEnum(SuggestionType),
-  description: z.string().min(3).max(2000),
+  description: z.string().min(3, "Please add a bit more detail.").max(2000),
   suggestedValue: z.string().max(2000).optional(),
   paperId: z.string().optional(),
   groupId: z.string().optional(),
@@ -57,8 +57,11 @@ export const suggestionSchema = z.object({
 
 export const newPaperSuggestionSchema = z.object({
   paperType: z.nativeEnum(PaperType),
-  paperName: z.string().min(2).max(300),
-  suggestedDepartmentName: z.string().min(1).max(200),
+  paperName: z.string().min(2, "Please enter the paper name.").max(300),
+  suggestedDepartmentName: z
+    .string()
+    .min(1, "Please select the offering department.")
+    .max(200),
   suggestedDepartmentRoom: z.string().max(100).optional(),
   sourceDocumentUrl: z.string().url().optional().or(z.literal("")),
   notes: z.string().max(2000).optional(),

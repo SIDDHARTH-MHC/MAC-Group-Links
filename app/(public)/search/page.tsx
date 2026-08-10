@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MacSearchBar } from "@/components/ui/mac-search-bar";
 import { Badge } from "@/components/ui/badge";
-import { getPaperTypeLabel, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { getPaperTypeLabel } from "@/lib/constants";
 import type { Paper, PaperEligibility, Course, Department } from "@prisma/client";
 
 type PaperRow = Paper & {

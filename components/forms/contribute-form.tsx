@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,14 @@ import {
 import { submitGroupContribution } from "@/lib/actions/public";
 import { PaperCombobox } from "@/components/forms/paper-combobox";
 import {
-  MacCourseSelect,
-  MacCourseYearRow,
-} from "@/components/forms/mac-course-select";
+  EligibilityAudienceFields,
+  buildEligibilitySubmitRows,
+  validateEligibilityAudience,
+  type AudienceMode,
+  type MultiEligibilityRow,
+} from "@/components/forms/eligibility-audience-fields";
 import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES } from "@/lib/constants";
+import { lookupTimetablePrefill } from "@/lib/timetable/prefill";
 import { ContributorType, GroupPlatform, type PaperType } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
@@ -51,26 +55,41 @@ export function ContributeForm({
     [papers, paperType],
   );
 
-  useEffect(() => {
-    if (!paperId) return;
-    if (!papersForType.some((p) => p.id === paperId)) {
-      setPaperId("");
-    }
-  }, [paperId, papersForType]);
-  const [appliesMode, setAppliesMode] = useState<
-    "mine" | "select" | "multiple" | "all"
-  >("mine");
+  const validPaperId = papersForType.some((p) => p.id === paperId)
+    ? paperId
+    : "";
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
+  const [multiRows, setMultiRows] = useState<MultiEligibilityRow[]>([
+    { courseId: "", year: "2", combination: "" },
+  ]);
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
-  const [extraEligibilities, setExtraEligibilities] = useState<
-    { courseId: string; year: string }[]
-  >([{ courseId: "", year: "2" }]);
   const [groupLink, setGroupLink] = useState("");
   const [platform, setPlatform] = useState<GroupPlatform>("WHATSAPP");
-  const [teacherName, setTeacherName] = useState("");
-  const [actualClassRoom, setActualClassRoom] = useState("");
-  const [sectionName, setSectionName] = useState("");
+  const initialPrefill = useMemo(() => {
+    if (!initialPaper?.paperType || !initialPaper.paperName) return null;
+    return lookupTimetablePrefill(
+      initialPaper.paperType,
+      initialPaper.paperName,
+    );
+  }, [initialPaper]);
+
+  const [teacherName, setTeacherName] = useState(
+    () => initialPrefill?.teacherName ?? "",
+  );
+  const [actualClassRoom, setActualClassRoom] = useState(
+    () => initialPrefill?.actualClassRoom ?? "",
+  );
+  const [classDays, setClassDays] = useState(() => initialPrefill?.days ?? "");
+  const [startTime, setStartTime] = useState(
+    () => initialPrefill?.startTime ?? "",
+  );
+  const [endTime, setEndTime] = useState(() => initialPrefill?.endTime ?? "");
+  const [timetableHint, setTimetableHint] = useState(() => !!initialPrefill);
+  const [sectionName, setSectionName] = useState(
+    () => initialPrefill?.sectionName ?? "",
+  );
   const [contributorName, setContributorName] = useState("");
   const [contributorType, setContributorType] = useState<ContributorType>(
     "STUDENT"
@@ -98,51 +117,71 @@ export function ContributeForm({
     }
   }
 
+  function applyTimetablePrefill(paper: { paperName: string } | undefined) {
+    if (!paperType || !paper) {
+      setTimetableHint(false);
+      return;
+    }
+    const row = lookupTimetablePrefill(paperType, paper.paperName);
+    setTimetableHint(!!row);
+    if (!row) return;
+    setTeacherName(row.teacherName ?? "");
+    setActualClassRoom(row.actualClassRoom ?? "");
+    setClassDays(row.days ?? "");
+    setStartTime(row.startTime ?? "");
+    setEndTime(row.endTime ?? "");
+    setSectionName(row.sectionName ?? "");
+  }
+
+  function clearScheduleFields() {
+    setTeacherName("");
+    setActualClassRoom("");
+    setClassDays("");
+    setStartTime("");
+    setEndTime("");
+    setSectionName("");
+    setTimetableHint(false);
+  }
+
+
   function submit() {
     if (!paperType) {
       setMessage({ ok: false, text: "Select a paper type (SEC, VAC, etc.)" });
       return;
     }
-    if (!paperId) {
+    if (!validPaperId) {
       setMessage({ ok: false, text: "Select a paper name" });
       return;
     }
-    const eligibilities =
-      appliesMode === "all"
-        ? [{ appliesToAll: true }]
-        : appliesMode === "multiple"
-          ? extraEligibilities
-              .filter((e) => e.courseId)
-              .map((e) => ({
-                courseId: e.courseId,
-                year: Number(e.year),
-              }))
-          : [
-              {
-                courseId: courseId || undefined,
-                year: Number(year),
-                combination: combination || undefined,
-              },
-            ];
-
-    if (
-      appliesMode === "multiple" &&
-      eligibilities.length === 0
-    ) {
-      setMessage({ ok: false, text: "Select at least one course and year" });
+    const audErr = validateEligibilityAudience(
+      audienceMode,
+      { courseId, year },
+      multiRows,
+    );
+    if (audErr) {
+      setMessage({ ok: false, text: audErr });
       return;
     }
+    const eligibilities = buildEligibilitySubmitRows(
+      audienceMode,
+      { courseId, year, combination },
+      multiRows,
+    );
+
     startTransition(async () => {
       const res = await submitGroupContribution({
-        paperId,
+        paperId: validPaperId,
         sectionName: sectionName || undefined,
         teacherName: teacherName || undefined,
         actualClassRoom: actualClassRoom || undefined,
+        days: classDays || undefined,
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
         groupPlatform: platform,
         groupLink,
         contributorName: contributorName || undefined,
         contributorType,
-        appliesToAll: appliesMode === "all",
+        appliesToAll: audienceMode === "all",
         eligibilities,
       });
       setMessage({
@@ -153,7 +192,7 @@ export function ContributeForm({
   }
 
   return (
-    <div className="mx-auto max-w-[640px] space-y-6 overflow-visible rounded-xl border border-border bg-card p-5">
+    <div className="w-full space-y-6 overflow-visible rounded-xl border border-border bg-card p-5 md:p-6">
       <div className="space-y-1.5">
         <Label htmlFor="paper-type">Paper type</Label>
         <Select
@@ -162,6 +201,7 @@ export function ContributeForm({
             const next = v as PaperType;
             setPaperType(next);
             setPaperId("");
+            clearScheduleFields();
             setMessage(null);
           }}
         >
@@ -195,10 +235,11 @@ export function ContributeForm({
         <PaperCombobox
           id="paper-combobox"
           papers={papersForType}
-          value={paperId}
+          value={validPaperId}
           onValueChange={(id) => {
             setPaperId(id);
             setMessage(null);
+            applyTimetablePrefill(papersForType.find((p) => p.id === id));
           }}
           disabled={!paperType}
           placeholder={
@@ -214,98 +255,74 @@ export function ContributeForm({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Who is this group for?</Label>
-        <Select
-          value={appliesMode}
-          onValueChange={(v) => {
-            const mode = v as "mine" | "select" | "multiple" | "all";
-            setAppliesMode(mode);
-            if (mode === "mine") applyMinePrefs();
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="mine">My course &amp; year</SelectItem>
-            <SelectItem value="select">Select course/year</SelectItem>
-            <SelectItem value="multiple">Multiple courses/years</SelectItem>
-            <SelectItem value="all">Everyone taking this paper</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {appliesMode === "mine" && !courseId ? (
-        <Button type="button" variant="secondary" size="sm" onClick={applyMinePrefs}>
-          Load from My Course
-        </Button>
-      ) : null}
-
-      {(appliesMode === "select" || appliesMode === "mine") && (
-        <MacCourseSelect
-          courses={courses}
-          courseId={courseId}
-          onCourseIdChange={setCourseId}
-          year={year}
-          onYearChange={setYear}
-          combination={combination}
-          onCombinationChange={setCombination}
-          combinationLabel="Combination"
-          combinationOptional
-        />
-      )}
-
-      {appliesMode === "multiple" && (
-        <div className="space-y-3">
-          {extraEligibilities.map((row, idx) => (
-            <MacCourseYearRow
-              key={idx}
-              courses={courses}
-              courseId={row.courseId}
-              onCourseIdChange={(v) => {
-                const next = [...extraEligibilities];
-                next[idx] = { ...next[idx], courseId: v };
-                setExtraEligibilities(next);
-              }}
-              year={row.year}
-              onYearChange={(v) => {
-                const next = [...extraEligibilities];
-                next[idx] = { ...next[idx], year: v };
-                setExtraEligibilities(next);
-              }}
-            />
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setExtraEligibilities([
-                ...extraEligibilities,
-                { courseId: "", year: "2" },
-              ])
-            }
-          >
-            + Add another course/year
-          </Button>
-        </div>
-      )}
+      <EligibilityAudienceFields
+        courses={courses}
+        mode={audienceMode}
+        onModeChange={setAudienceMode}
+        courseId={courseId}
+        onCourseIdChange={setCourseId}
+        year={year}
+        onYearChange={setYear}
+        combination={combination}
+        onCombinationChange={setCombination}
+        multiRows={multiRows}
+        onMultiRowsChange={setMultiRows}
+        heading="Who is this group for?"
+        showMineHint
+        onLoadMine={() => {
+          setAudienceMode("single");
+          applyMinePrefs();
+        }}
+      />
 
       <div className="space-y-1.5">
         <Label>Section (optional)</Label>
         <Input value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
       </div>
+      {timetableHint ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Teacher, room, and schedule prefilled from the 2026–27 odd-semester timetable.
+          Please confirm before submitting.
+        </p>
+      ) : null}
       <div className="space-y-1.5">
         <Label>Teacher (optional)</Label>
         <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
       </div>
       <div className="space-y-1.5">
-        <Label>Actual Class Room (optional)</Label>
+        <Label>Actual class room (optional)</Label>
         <Input
           value={actualClassRoom}
           onChange={(e) => setActualClassRoom(e.target.value)}
         />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Class days (optional)</Label>
+          <Input
+            value={classDays}
+            onChange={(e) => setClassDays(e.target.value)}
+            placeholder="e.g. Monday, Wednesday"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Class time (optional)</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              placeholder="Start"
+              className="flex-1"
+            />
+            <span className="text-muted-foreground">–</span>
+            <Input
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              placeholder="End"
+              className="flex-1"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-1.5">

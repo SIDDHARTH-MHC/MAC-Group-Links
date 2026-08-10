@@ -17,6 +17,8 @@
   --border: #e7e5e4;
   --input: #e7e5e4;
   --ring: #d97706;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
   --radius: 0.75rem;
 }
 
@@ -37,6 +39,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --radius-lg: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS, getPaperTypeLabel } from "@/lib/constants";
+import { MAC_PAPER_TYPES, getPaperTypeLabel } from "@/lib/constants";
 import type { Department, Paper, PaperType, Semester } from "@prisma/client";
 
 export function PaperAdminClient({
