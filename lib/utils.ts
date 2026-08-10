@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { cnSemesterLabel } from "@/lib/constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,8 +27,11 @@ export function paperTypeLabel(type: string): string {
   return labels[type] ?? type;
 }
 
-export function formatSemesterLabel(semester: { academicYear: string; semesterNumber: number }): string {
-  return `${semester.academicYear} • Semester ${semester.semesterNumber}`;
+export function formatSemesterLabel(semester: {
+  academicYear: string;
+  semesterNumber: number;
+}): string {
+  return cnSemesterLabel(semester.academicYear, semester.semesterNumber);
 }
 
 export function normalizeGroupLink(url: string): string {

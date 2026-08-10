@@ -102,6 +102,17 @@ export function matchesUserEligibilityWithIds(
   });
 }
 
+/** Public-facing term name (MAC/DU cycle), not the internal semester number. */
+export function semesterTermLabel(semesterNumber: number): string {
+  if ([1, 3, 5, 7].includes(semesterNumber)) {
+    return "Odd Semester August - DEC";
+  }
+  if ([2, 4, 6, 8].includes(semesterNumber)) {
+    return "Even Semester January - June";
+  }
+  return `Semester ${semesterNumber}`;
+}
+
 export function cnSemesterLabel(academicYear: string, semesterNumber: number) {
-  return `${academicYear} • Semester ${semesterNumber}`;
+  return `${academicYear} • ${semesterTermLabel(semesterNumber)}`;
 }

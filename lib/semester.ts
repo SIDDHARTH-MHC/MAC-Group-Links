@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/db/prisma";
+import { cnSemesterLabel } from "@/lib/constants";
 import type { PaperType, Semester } from "@prisma/client";
 
-export function formatSemesterLabel(semester: { academicYear: string; semesterNumber: number }): string {
-  return `${semester.academicYear} • Semester ${semester.semesterNumber}`;
+export function formatSemesterLabel(semester: {
+  academicYear: string;
+  semesterNumber: number;
+}): string {
+  return cnSemesterLabel(semester.academicYear, semester.semesterNumber);
 }
 
 export async function getActiveSemester(): Promise<Semester | null> {
