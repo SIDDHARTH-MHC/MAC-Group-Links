@@ -28,12 +28,12 @@ export default async function PaperDetailPage({ params }: Props) {
         <dl className="mt-4 space-y-2 text-sm">
           <div>
             <dt className="text-amber-900/60">Offering department</dt>
-            <dd className="font-medium">{paper.offeringDepartment}</dd>
+            <dd className="font-medium">{paper.department.name}</dd>
           </div>
-          {paper.departmentRoom && (
+          {paper.department.departmentRoom && (
             <div>
               <dt className="text-amber-900/60">Department room</dt>
-              <dd className="font-medium">{paper.departmentRoom}</dd>
+              <dd className="font-medium">{paper.department.departmentRoom}</dd>
             </div>
           )}
           {paper.eligibilities.length > 0 && (

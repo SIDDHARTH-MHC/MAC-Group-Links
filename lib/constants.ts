@@ -47,7 +47,21 @@ export function formatEligibility(
 }
 
 export function normalizeGroupLink(url: string): string {
-  return url.trim().replace(/\/$/, "");
+  const trimmed = url.trim();
+  try {
+    const parsed = new URL(trimmed);
+    parsed.hostname = parsed.hostname.toLowerCase();
+    const pathname = parsed.pathname.replace(/\/$/, "") || "/";
+    parsed.pathname = pathname;
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return trimmed.replace(/\/$/, "").toLowerCase();
+  }
+}
+
+export function groupLinkFields(url: string) {
+  const normalized = normalizeGroupLink(url);
+  return { groupLink: url.trim(), normalizedGroupLink: normalized };
 }
 
 export function isValidGroupUrl(url: string): boolean {

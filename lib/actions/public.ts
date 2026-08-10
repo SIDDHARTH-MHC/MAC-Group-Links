@@ -8,7 +8,8 @@ import {
   newPaperSuggestionSchema,
   suggestionSchema,
 } from "@/lib/validations";
-import { normalizeGroupLink } from "@/lib/constants";
+import { groupLinkFields } from "@/lib/constants";
+import { duplicateGroupLinkMessage } from "@/lib/db/departments";
 import { revalidatePath } from "next/cache";
 import { SuggestionType } from "@prisma/client";
 
@@ -38,26 +39,13 @@ export async function submitGroupContribution(
   const data = parsed.data;
   await assertPaperInActiveSemester(data.paperId);
 
-  const normalizedLink = normalizeGroupLink(data.groupLink);
-  const duplicate = await prisma.group.findFirst({
-    where: { paperId: data.paperId, groupLink: normalizedLink },
-  });
-  if (duplicate) {
-    return { ok: false, error: "That group link has already been added." };
-  }
-
-  const pendingDup = await prisma.groupContribution.findFirst({
-    where: {
-      paperId: data.paperId,
-      groupLink: normalizedLink,
-      status: "PENDING",
-    },
-  });
-  if (pendingDup) {
-    return {
-      ok: false,
-      error: "This link is already pending review for this paper.",
-    };
+  const linkFields = groupLinkFields(data.groupLink);
+  const dupMsg = await duplicateGroupLinkMessage(
+    data.paperId,
+    linkFields.normalizedGroupLink
+  );
+  if (dupMsg) {
+    return { ok: false, error: dupMsg };
   }
 
   await prisma.groupContribution.create({
@@ -70,7 +58,8 @@ export async function submitGroupContribution(
       startTime: data.startTime,
       endTime: data.endTime,
       groupPlatform: data.groupPlatform,
-      groupLink: normalizedLink,
+      groupLink: linkFields.groupLink,
+      normalizedGroupLink: linkFields.normalizedGroupLink,
       contributorName: data.contributorName,
       contributorType: data.contributorType,
       appliesToAll: data.appliesToAll,
@@ -137,8 +126,8 @@ export async function submitNewPaperSuggestion(
       description: data.notes || `New paper: ${data.paperName}`,
       paperType: data.paperType,
       paperName: data.paperName,
-      offeringDepartment: data.offeringDepartment,
-      departmentRoom: data.departmentRoom,
+      suggestedDepartmentName: data.suggestedDepartmentName,
+      suggestedDepartmentRoom: data.suggestedDepartmentRoom,
       sourceDocumentUrl: data.sourceDocumentUrl || undefined,
       contributorName: data.contributorName,
       contributorType: data.contributorType,

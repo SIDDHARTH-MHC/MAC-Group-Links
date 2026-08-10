@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
 import {
   updatePaper,
@@ -25,18 +25,27 @@ import type {
   PaperEligibility,
   GroupEligibility,
   Course,
+  Department,
 } from "@prisma/client";
 import { GroupPlatform } from "@prisma/client";
 
 type PaperFull = Paper & {
+  department: Department;
   eligibilities: (PaperEligibility & { course: Course | null })[];
   groups: (Group & {
     eligibilities: (GroupEligibility & { course: Course | null })[];
   })[];
 };
 
-export function PaperEditClient({ paper }: { paper: PaperFull }) {
+export function PaperEditClient({
+  paper,
+  departments,
+}: {
+  paper: PaperFull;
+  departments: Department[];
+}) {
   const [pending, startTransition] = useTransition();
+  const [departmentId, setDepartmentId] = useState(paper.departmentId);
 
   return (
     <div className="space-y-8">
@@ -57,8 +66,7 @@ export function PaperEditClient({ paper }: { paper: PaperFull }) {
               semesterId: paper.semesterId,
               paperType: paper.paperType,
               paperName: String(fd.get("paperName")),
-              offeringDepartment: String(fd.get("offeringDepartment")),
-              departmentRoom: String(fd.get("departmentRoom") || "") || undefined,
+              departmentId,
               eligibilities: paper.eligibilities.map((e) => ({
                 courseId: e.courseId ?? undefined,
                 year: e.year ?? undefined,
@@ -72,12 +80,25 @@ export function PaperEditClient({ paper }: { paper: PaperFull }) {
         <Label>Paper name</Label>
         <Input name="paperName" defaultValue={paper.paperName} />
         <Label>Offering department</Label>
-        <Input
-          name="offeringDepartment"
-          defaultValue={paper.offeringDepartment}
-        />
-        <Label>Department room</Label>
-        <Input name="departmentRoom" defaultValue={paper.departmentRoom ?? ""} />
+        <Select
+          value={departmentId}
+          onValueChange={(v) => v && setDepartmentId(v)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-slate-500">
+          Department room: {paper.department.departmentRoom ?? "—"} (edit in
+          department master)
+        </p>
         <Button type="submit" disabled={pending}>
           Save paper
         </Button>

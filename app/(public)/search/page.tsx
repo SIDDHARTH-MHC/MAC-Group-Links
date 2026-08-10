@@ -6,9 +6,10 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PAPER_TYPE_LABELS } from "@/lib/constants";
-import type { Paper, PaperEligibility, Course } from "@prisma/client";
+import type { Paper, PaperEligibility, Course, Department } from "@prisma/client";
 
 type PaperRow = Paper & {
+  department: Department;
   eligibilities: (PaperEligibility & { course: Course | null })[];
 };
 
@@ -61,8 +62,10 @@ export default function SearchPage() {
               </Badge>
               <p className="font-medium">{paper.paperName}</p>
               <p className="text-sm text-amber-900/60">
-                {paper.offeringDepartment}
-                {paper.departmentRoom ? ` · Dept room ${paper.departmentRoom}` : ""}
+                {paper.department.name}
+                {paper.department.departmentRoom
+                  ? ` · Dept room ${paper.department.departmentRoom}`
+                  : ""}
               </p>
             </Link>
           </li>

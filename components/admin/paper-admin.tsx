@@ -38,16 +38,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
-import type { Paper, PaperType, Semester } from "@prisma/client";
+import type { Department, Paper, PaperType, Semester } from "@prisma/client";
 
 export function PaperAdminClient({
   semesters,
   activeSemesterId,
   papers,
+  departments,
 }: {
   semesters: Semester[];
   activeSemesterId: string;
-  papers: (Paper & { _count: { groups: number } })[];
+  papers: (Paper & {
+    department: Department;
+    _count: { groups: number };
+  })[];
+  departments: Department[];
 }) {
   const [semesterId, setSemesterId] = useState(activeSemesterId);
   const [filterType, setFilterType] = useState<PaperType | "ALL">("ALL");
@@ -94,16 +99,16 @@ export function PaperAdminClient({
         </Select>
       </div>
 
-      <NewPaperForm semesterId={semesterId} />
+      <NewPaperForm semesterId={semesterId} departments={departments} />
 
       <div className="rounded-lg border bg-white p-4">
-        <Label>Import papers (JSON array)</Label>
+        <Label>Import official catalogue (JSON array)</Label>
         <Textarea
           className="mt-2 font-mono text-xs"
           rows={6}
           value={importJson}
           onChange={(e) => setImportJson(e.target.value)}
-          placeholder='[{"paperType":"SEC","paperName":"...","offeringDepartment":"Economics","departmentRoom":"232","eligibilities":[{"appliesToAll":true}]}]'
+          placeholder='[{"paperType":"SEC","paperName":"IT Skills and Data Analysis 1","department":"Economics","eligibilities":[{"course":"BA Programme","year":2}]}]'
         />
         <Button
           className="mt-2"
@@ -115,10 +120,18 @@ export function PaperAdminClient({
             })
           }
         >
-          Import
+          Import Official Catalogue
         </Button>
       </div>
 
+      {filtered.length === 0 ? (
+        <div className="rounded-lg border border-dashed bg-amber-50/50 p-8 text-center">
+          <p className="text-slate-700">No papers have been added yet.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Use + Add Paper or Import Official Catalogue above.
+          </p>
+        </div>
+      ) : (
       <div className="overflow-x-auto rounded-lg border bg-white">
         <Table>
           <TableHeader>
@@ -136,8 +149,10 @@ export function PaperAdminClient({
                 <TableCell className="font-medium">{paper.paperName}</TableCell>
                 <TableCell>{paper.paperType}</TableCell>
                 <TableCell>
-                  {paper.offeringDepartment}
-                  {paper.departmentRoom ? ` (${paper.departmentRoom})` : ""}
+                  {paper.department.name}
+                  {paper.department.departmentRoom
+                    ? ` · ${paper.department.departmentRoom}`
+                    : ""}
                 </TableCell>
                 <TableCell>{paper._count.groups}</TableCell>
                 <TableCell className="space-x-2 text-right">
@@ -178,12 +193,20 @@ export function PaperAdminClient({
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   );
 }
 
-function NewPaperForm({ semesterId }: { semesterId: string }) {
+function NewPaperForm({
+  semesterId,
+  departments,
+}: {
+  semesterId: string;
+  departments: Department[];
+}) {
   const [paperType, setPaperType] = useState<PaperType>("SEC");
+  const [departmentId, setDepartmentId] = useState(departments[0]?.id ?? "");
   const [pending, startTransition] = useTransition();
 
   return (
@@ -197,15 +220,14 @@ function NewPaperForm({ semesterId }: { semesterId: string }) {
             semesterId,
             paperType,
             paperName: String(fd.get("paperName")),
-            offeringDepartment: String(fd.get("offeringDepartment")),
-            departmentRoom: String(fd.get("departmentRoom") || "") || undefined,
+            departmentId: departmentId || String(fd.get("departmentId")),
             eligibilities: [{ appliesToAll: true }],
           });
           e.currentTarget.reset();
         });
       }}
     >
-      <h2 className="md:col-span-2 font-semibold">Add paper</h2>
+      <h2 className="md:col-span-2 font-semibold">+ Add Paper</h2>
       <div>
         <Label>Type</Label>
         <Select value={paperType} onValueChange={(v) => v && setPaperType(v as PaperType)}>
@@ -227,13 +249,24 @@ function NewPaperForm({ semesterId }: { semesterId: string }) {
       </div>
       <div>
         <Label>Offering department</Label>
-        <Input name="offeringDepartment" required />
+        <Select
+          value={departmentId}
+          onValueChange={(v) => v && setDepartmentId(v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select department" />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name}
+                {d.departmentRoom ? ` · ${d.departmentRoom}` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div>
-        <Label>Department room</Label>
-        <Input name="departmentRoom" placeholder="Offering dept room" />
-      </div>
-      <Button type="submit" disabled={pending} className="md:col-span-2 w-fit">
+      <Button type="submit" disabled={pending || !departmentId} className="md:col-span-2 w-fit">
         Add paper
       </Button>
     </form>

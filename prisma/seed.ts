@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { groupLinkFields } from "../lib/constants";
 
 const prisma = new PrismaClient();
 
@@ -13,10 +14,12 @@ const SAMPLE_LINK = "https://example.com/sample-mac-group-do-not-use";
 
 type SeedPaper = {
   paperType: string;
-  offeringDepartment: string;
+  department: string;
   paperName: string;
   eligibilityNotes?: string;
 };
+
+type DepartmentSeed = { name: string; departmentRoom: string | null };
 
 async function main() {
   await prisma.groupReport.deleteMany();
@@ -27,7 +30,21 @@ async function main() {
   await prisma.paper.deleteMany();
   await prisma.semester.deleteMany();
   await prisma.course.deleteMany();
+  await prisma.department.deleteMany();
   await prisma.adminAuditLog.deleteMany();
+
+  const deptRaw = JSON.parse(
+    readFileSync(join(__dirname, "data/departments.json"), "utf-8")
+  ) as DepartmentSeed[];
+
+  for (const d of deptRaw) {
+    await prisma.department.create({
+      data: {
+        name: d.name,
+        departmentRoom: d.departmentRoom,
+      },
+    });
+  }
 
   const courses = await Promise.all([
     prisma.course.create({
@@ -59,22 +76,25 @@ async function main() {
 
   const raw = JSON.parse(
     readFileSync(join(__dirname, "data/papers-dev.json"), "utf-8")
-  ) as {
-    departmentRooms: Record<string, string>;
-    papers: SeedPaper[];
-  };
+  ) as { papers: SeedPaper[] };
 
   const paperRecords: { id: string; paperName: string }[] = [];
+  const linkFields = groupLinkFields(SAMPLE_LINK);
 
   for (const p of raw.papers) {
-    const departmentRoom = raw.departmentRooms[p.offeringDepartment] ?? null;
+    const dept = await prisma.department.findFirst({
+      where: { name: { equals: p.department, mode: "insensitive" } },
+    });
+    if (!dept) {
+      console.warn("Skipping paper — unknown department:", p.department, p.paperName);
+      continue;
+    }
     const paper = await prisma.paper.create({
       data: {
         semesterId: semester.id,
         paperType: p.paperType as PaperType,
         paperName: p.paperName,
-        offeringDepartment: p.offeringDepartment,
-        departmentRoom,
+        departmentId: dept.id,
         eligibilityNotes: p.eligibilityNotes,
         eligibilities: {
           create: [{ appliesToAll: true }],
@@ -105,7 +125,8 @@ async function main() {
         startTime: "10:00 AM",
         endTime: "11:00 AM",
         groupPlatform: GroupPlatform.WHATSAPP,
-        groupLink: SAMPLE_LINK,
+        groupLink: linkFields.groupLink,
+        normalizedGroupLink: linkFields.normalizedGroupLink,
         contributorType: ContributorType.OTHER,
         contributorName: "Dev seed",
         eligibilities: {
@@ -123,7 +144,8 @@ async function main() {
         teacherName: "Sample Faculty",
         actualClassRoom: "205",
         groupPlatform: GroupPlatform.TELEGRAM,
-        groupLink: SAMPLE_LINK,
+        groupLink: linkFields.groupLink,
+        normalizedGroupLink: linkFields.normalizedGroupLink,
         eligibilities: {
           create: [{ courseId: baProg.id, year: 2 }],
         },
@@ -135,27 +157,42 @@ async function main() {
     await prisma.group.create({
       data: {
         paperId: digitalFilm.id,
-        sectionName: "Group A",
+        sectionName: "Section A",
         teacherName: "Vinod Kr Verma (sample)",
-        actualClassRoom: "Media Lab",
+        actualClassRoom: "301",
         days: "Mon, Wed",
         startTime: "2:00 PM",
         groupPlatform: GroupPlatform.WHATSAPP,
-        groupLink: SAMPLE_LINK,
+        groupLink: linkFields.groupLink,
+        normalizedGroupLink: linkFields.normalizedGroupLink,
         eligibilities: {
-          create: [
-            { courseId: baProg.id, year: 2 },
-            { courseId: baProg.id, year: 3 },
-          ],
+          create: [{ courseId: baProg.id, year: 2 }],
+        },
+      },
+    });
+    await prisma.group.create({
+      data: {
+        paperId: digitalFilm.id,
+        sectionName: "Section B",
+        teacherName: "Sample Teacher (3rd year)",
+        actualClassRoom: "302",
+        groupPlatform: GroupPlatform.WHATSAPP,
+        groupLink: "https://example.com/sample-mac-group-section-b",
+        normalizedGroupLink: groupLinkFields(
+          "https://example.com/sample-mac-group-section-b"
+        ).normalizedGroupLink,
+        eligibilities: {
+          create: [{ courseId: baProg.id, year: 3 }],
         },
       },
     });
   }
 
-  console.log("Seed complete:", {
+  console.log("Seed complete (development sample data only):", {
     semester: semester.academicYear,
     papers: paperRecords.length,
     courses: courses.length,
+    departments: deptRaw.length,
   });
 }
 

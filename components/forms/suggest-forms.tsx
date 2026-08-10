@@ -166,8 +166,8 @@ function EditSuggestionForm({
 function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
   const [paperType, setPaperType] = useState<PaperType>("SEC");
   const [paperName, setPaperName] = useState("");
-  const [offeringDepartment, setOfferingDepartment] = useState("");
-  const [departmentRoom, setDepartmentRoom] = useState("");
+  const [suggestedDepartmentName, setSuggestedDepartmentName] = useState("");
+  const [suggestedDepartmentRoom, setSuggestedDepartmentRoom] = useState("");
   const [notes, setNotes] = useState("");
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("1");
@@ -200,15 +200,15 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
       <div>
         <Label>Offering department</Label>
         <Input
-          value={offeringDepartment}
-          onChange={(e) => setOfferingDepartment(e.target.value)}
+          value={suggestedDepartmentName}
+          onChange={(e) => setSuggestedDepartmentName(e.target.value)}
         />
       </div>
       <div>
         <Label>Department room</Label>
         <Input
-          value={departmentRoom}
-          onChange={(e) => setDepartmentRoom(e.target.value)}
+          value={suggestedDepartmentRoom}
+          onChange={(e) => setSuggestedDepartmentRoom(e.target.value)}
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -257,8 +257,8 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
             const res = await submitNewPaperSuggestion({
               paperType,
               paperName,
-              offeringDepartment,
-              departmentRoom: departmentRoom || undefined,
+              suggestedDepartmentName,
+              suggestedDepartmentRoom: suggestedDepartmentRoom || undefined,
               notes,
               contributorName: contributorName || undefined,
               contributorType,

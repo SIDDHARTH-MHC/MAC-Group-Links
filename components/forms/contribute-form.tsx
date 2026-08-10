@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,10 +29,13 @@ export function ContributeForm({
   const urlPaperId = searchParams.get("paperId");
   const [paperId, setPaperId] = useState(initialPaperId ?? urlPaperId ?? "");
   const [appliesMode, setAppliesMode] = useState<
-    "mine" | "select" | "all"
-  >("select");
+    "mine" | "select" | "multiple" | "all"
+  >("mine");
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
+  const [extraEligibilities, setExtraEligibilities] = useState<
+    { courseId: string; year: string }[]
+  >([{ courseId: "", year: "2" }]);
   const [groupLink, setGroupLink] = useState("");
   const [platform, setPlatform] = useState<GroupPlatform>("WHATSAPP");
   const [teacherName, setTeacherName] = useState("");
@@ -63,6 +66,10 @@ export function ContributeForm({
     }
   }
 
+  useEffect(() => {
+    if (appliesMode === "mine") applyMinePrefs();
+  }, [appliesMode]);
+
   function submit() {
     if (!paperId) {
       setMessage({ ok: false, text: "Select a paper" });
@@ -71,13 +78,27 @@ export function ContributeForm({
     const eligibilities =
       appliesMode === "all"
         ? [{ appliesToAll: true }]
-        : [
-            {
-              courseId: courseId || undefined,
-              year: Number(year),
-            },
-          ];
+        : appliesMode === "multiple"
+          ? extraEligibilities
+              .filter((e) => e.courseId)
+              .map((e) => ({
+                courseId: e.courseId,
+                year: Number(e.year),
+              }))
+          : [
+              {
+                courseId: courseId || undefined,
+                year: Number(year),
+              },
+            ];
 
+    if (
+      appliesMode === "multiple" &&
+      eligibilities.length === 0
+    ) {
+      setMessage({ ok: false, text: "Select at least one course and year" });
+      return;
+    }
     startTransition(async () => {
       const res = await submitGroupContribution({
         paperId,
@@ -124,7 +145,7 @@ export function ContributeForm({
         <Select
           value={appliesMode}
           onValueChange={(v) => {
-            const mode = v as "mine" | "select" | "all";
+            const mode = v as "mine" | "select" | "multiple" | "all";
             setAppliesMode(mode);
             if (mode === "mine") applyMinePrefs();
           }}
@@ -133,14 +154,15 @@ export function ContributeForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mine">My course/year (from My Course)</SelectItem>
+            <SelectItem value="mine">My course/year</SelectItem>
             <SelectItem value="select">Select course/year</SelectItem>
-            <SelectItem value="all">All students taking this paper</SelectItem>
+            <SelectItem value="multiple">Multiple courses/years</SelectItem>
+            <SelectItem value="all">Everyone taking this paper</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {appliesMode === "select" && (
+      {(appliesMode === "select" || appliesMode === "mine") && (
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label>Course</Label>
@@ -173,13 +195,92 @@ export function ContributeForm({
         </div>
       )}
 
+      {appliesMode === "multiple" && (
+        <div className="space-y-3">
+          {extraEligibilities.map((row, idx) => (
+            <div key={idx} className="grid gap-2 sm:grid-cols-2">
+              <Select
+                value={row.courseId}
+                onValueChange={(v) => {
+                  const next = [...extraEligibilities];
+                  next[idx] = { ...next[idx], courseId: v ?? "" };
+                  setExtraEligibilities(next);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={row.year}
+                onValueChange={(v) => {
+                  const next = [...extraEligibilities];
+                  next[idx] = { ...next[idx], year: v ?? "2" };
+                  setExtraEligibilities(next);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1st Year</SelectItem>
+                  <SelectItem value="2">2nd Year</SelectItem>
+                  <SelectItem value="3">3rd Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setExtraEligibilities([
+                ...extraEligibilities,
+                { courseId: "", year: "2" },
+              ])
+            }
+          >
+            + Add another course/year
+          </Button>
+        </div>
+      )}
+
       <div>
-        <Label>Group link</Label>
+        <Label>Section (optional)</Label>
+        <Input value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
+      </div>
+      <div>
+        <Label>Teacher (optional)</Label>
+        <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
+      </div>
+      <div>
+        <Label>Actual class room (optional)</Label>
         <Input
-          value={groupLink}
-          onChange={(e) => setGroupLink(e.target.value)}
-          placeholder="https://chat.whatsapp.com/..."
+          value={actualClassRoom}
+          onChange={(e) => setActualClassRoom(e.target.value)}
         />
+      </div>
+      <div>
+        <Label>Days (optional)</Label>
+        <Input value={days} onChange={(e) => setDays(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label>Start time (optional)</Label>
+          <Input value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        </div>
+        <div>
+          <Label>End time (optional)</Label>
+          <Input value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+        </div>
       </div>
 
       <div>
@@ -199,65 +300,38 @@ export function ContributeForm({
         </Select>
       </div>
 
-      <details className="text-sm">
-        <summary className="cursor-pointer text-amber-800">
-          Optional details
-        </summary>
-        <div className="mt-3 space-y-3">
-          <div>
-            <Label>Section name</Label>
-            <Input value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
-          </div>
-          <div>
-            <Label>Teacher</Label>
-            <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
-          </div>
-          <div>
-            <Label>Actual class room</Label>
-            <Input
-              value={actualClassRoom}
-              onChange={(e) => setActualClassRoom(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Days</Label>
-            <Input value={days} onChange={(e) => setDays(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>Start time</Label>
-              <Input value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-            </div>
-            <div>
-              <Label>End time</Label>
-              <Input value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <Label>Your name</Label>
-            <Input
-              value={contributorName}
-              onChange={(e) => setContributorName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>You are</Label>
-            <Select
-              value={contributorType}
-              onValueChange={(v) => setContributorType(v as ContributorType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="STUDENT">Student</SelectItem>
-                <SelectItem value="PROFESSOR">Professor</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </details>
+      <div>
+        <Label>Group link</Label>
+        <Input
+          value={groupLink}
+          onChange={(e) => setGroupLink(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+        />
+      </div>
+
+      <div>
+        <Label>Your name (optional)</Label>
+        <Input
+          value={contributorName}
+          onChange={(e) => setContributorName(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label>You are</Label>
+        <Select
+          value={contributorType}
+          onValueChange={(v) => setContributorType(v as ContributorType)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="STUDENT">Student</SelectItem>
+            <SelectItem value="PROFESSOR">Professor</SelectItem>
+            <SelectItem value="OTHER">Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {message && (
         <p
@@ -274,7 +348,7 @@ export function ContributeForm({
         disabled={pending}
         onClick={submit}
       >
-        {pending ? "Submitting…" : "Submit"}
+        {pending ? "Submitting…" : "Submit group link"}
       </Button>
     </div>
   );

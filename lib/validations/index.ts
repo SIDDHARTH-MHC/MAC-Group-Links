@@ -16,7 +16,15 @@ export const groupLinkSchema = z
 export const eligibilityRowSchema = z.object({
   courseId: z.string().optional(),
   year: z.coerce.number().int().min(1).max(3).optional(),
-  combination: z.string().max(200).optional(),
+  combination: z.string().max(200).optional().nullable(),
+  notes: z.string().max(500).optional(),
+  appliesToAll: z.boolean().optional(),
+});
+
+export const importEligibilitySchema = z.object({
+  course: z.string().min(1).optional(),
+  year: z.coerce.number().int().min(1).max(3).optional(),
+  combination: z.string().max(200).optional().nullable(),
   notes: z.string().max(500).optional(),
   appliesToAll: z.boolean().optional(),
 });
@@ -50,8 +58,8 @@ export const suggestionSchema = z.object({
 export const newPaperSuggestionSchema = z.object({
   paperType: z.nativeEnum(PaperType),
   paperName: z.string().min(2).max(300),
-  offeringDepartment: z.string().min(1).max(200),
-  departmentRoom: z.string().max(100).optional(),
+  suggestedDepartmentName: z.string().min(1).max(200),
+  suggestedDepartmentRoom: z.string().max(100).optional(),
   sourceDocumentUrl: z.string().url().optional().or(z.literal("")),
   notes: z.string().max(2000).optional(),
   contributorName: z.string().max(200).optional(),
@@ -76,8 +84,7 @@ export const paperFormSchema = z.object({
   paperType: z.nativeEnum(PaperType),
   paperName: z.string().min(2).max(300),
   paperCode: z.string().max(50).optional(),
-  offeringDepartment: z.string().min(1).max(200),
-  departmentRoom: z.string().max(100).optional(),
+  departmentId: z.string().min(1),
   description: z.string().max(2000).optional(),
   sourceDocumentUrl: z.string().url().optional().or(z.literal("")),
   eligibilityNotes: z.string().max(2000).optional(),
@@ -106,17 +113,17 @@ export const groupFormSchema = z.object({
 export const semesterFormSchema = z.object({
   academicYear: z.string().regex(/^\d{4}-\d{2}$/, "Use format like 2026-27"),
   semesterNumber: z.coerce.number().int().min(1).max(8),
-  makeActive: z.boolean().default(true),
 });
 
 export const paperImportSchema = z.array(
   z.object({
     paperType: z.nativeEnum(PaperType),
     paperName: z.string().min(2),
-    offeringDepartment: z.string().min(1),
+    department: z.string().min(1),
     departmentRoom: z.string().optional(),
     paperCode: z.string().optional(),
     sourceDocumentUrl: z.string().optional(),
-    eligibilities: z.array(eligibilityRowSchema).default([]),
-  })
+    eligibilityNotes: z.string().max(2000).optional(),
+    eligibilities: z.array(importEligibilitySchema).default([]),
+  }),
 );

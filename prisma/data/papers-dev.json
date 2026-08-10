@@ -1,58 +1,241 @@
 {
-  "departmentRooms": {
-    "English": "125",
-    "Economics": "232",
-    "Political Science": "126",
-    "Commerce": "130",
-    "Physics": "113"
-  },
   "papers": [
-    { "paperType": "SEC", "offeringDepartment": "English", "paperName": "Creative Writings" },
-    { "paperType": "SEC", "offeringDepartment": "English", "paperName": "Communication in Everyday Life" },
-    { "paperType": "SEC", "offeringDepartment": "Business Economics", "paperName": "Personality Development and Communication" },
-    { "paperType": "SEC", "offeringDepartment": "Economics", "paperName": "IT Skills and Data Analysis 1" },
-    { "paperType": "SEC", "offeringDepartment": "Economics", "paperName": "Basic IT tools" },
-    { "paperType": "SEC", "offeringDepartment": "Economics", "paperName": "Advanced Spreadsheet tools" },
-    { "paperType": "SEC", "offeringDepartment": "Journalism", "paperName": "Content Development and media for children" },
-    { "paperType": "SEC", "offeringDepartment": "Hindi", "paperName": "Patkatha Lekhan" },
-    { "paperType": "SEC", "offeringDepartment": "Hindi", "paperName": "Rachnatmak Lekhan" },
-    { "paperType": "SEC", "offeringDepartment": "Mathematics", "paperName": "Latex typesetting for beginners" },
-    { "paperType": "SEC", "offeringDepartment": "Mathematics", "paperName": "Network Flows" },
-    { "paperType": "SEC", "offeringDepartment": "Political Science", "paperName": "Political Leadership and Communication" },
-    { "paperType": "SEC", "offeringDepartment": "Political Science", "paperName": "Negotiation and Leadership" },
-    { "paperType": "SEC", "offeringDepartment": "Commerce", "paperName": "Finance for Everyone" },
-    { "paperType": "SEC", "offeringDepartment": "Electronics", "paperName": "Design thinking" },
-    { "paperType": "SEC", "offeringDepartment": "Electronics", "paperName": "Basic IT tools" },
-    { "paperType": "SEC", "offeringDepartment": "Electronics", "paperName": "fundamentals of python programming" },
-    { "paperType": "SEC", "offeringDepartment": "Physics", "paperName": "Basic IT tools" },
-    { "paperType": "SEC", "offeringDepartment": "Physics", "paperName": "Practices in Horoscope – 1" },
-    { "paperType": "SEC", "offeringDepartment": "Physics", "paperName": "Prospecting ewaste for sustainability" },
-    { "paperType": "SEC", "offeringDepartment": "Chemistry", "paperName": "Dairy Processing" },
-    { "paperType": "VAC", "offeringDepartment": "English", "paperName": "Ecology and Literature" },
-    { "paperType": "VAC", "offeringDepartment": "English", "paperName": "Emotional Intelligence" },
-    { "paperType": "VAC", "offeringDepartment": "Hindi", "paperName": "भारतीय भक्ति परम्परा और मानव मूल्य" },
-    { "paperType": "VAC", "offeringDepartment": "Hindi", "paperName": "साहित्य, संस्कृति और सिनेमा" },
-    { "paperType": "VAC", "offeringDepartment": "Mathematics", "paperName": "Vedic Mathematics-I" },
-    { "paperType": "VAC", "offeringDepartment": "Political Science", "paperName": "Ethics and Values in Ancient Indian Traditions" },
-    { "paperType": "VAC", "offeringDepartment": "Political Science", "paperName": "Constitutional Values and Fundamental Duties" },
-    { "paperType": "VAC", "offeringDepartment": "Political Science", "paperName": "Swachh Bharat" },
-    { "paperType": "VAC", "offeringDepartment": "Physics", "paperName": "Vedic Mathematics 1" },
-    { "paperType": "VAC", "offeringDepartment": "Physical Education", "paperName": "Fit India" },
-    { "paperType": "GE", "offeringDepartment": "English", "paperName": "Indian English Literatures" },
-    { "paperType": "GE", "offeringDepartment": "Business Economics", "paperName": "Principles of Microeconomics" },
-    { "paperType": "GE", "offeringDepartment": "Computer Science", "paperName": "Object Oriented Programming using C++" },
-    { "paperType": "GE", "offeringDepartment": "Economics", "paperName": "Principles of Microeconomics 1" },
-    { "paperType": "GE", "offeringDepartment": "History", "paperName": "Delhi through Ages" },
-    { "paperType": "GE", "offeringDepartment": "Hindi", "paperName": "Hindi Cinema aur uska adhyayan" },
-    { "paperType": "GE", "offeringDepartment": "Journalism", "paperName": "Basics of Journalism" },
-    { "paperType": "GE", "offeringDepartment": "Mathematics", "paperName": "Fundamental of calculus" },
-    { "paperType": "GE", "offeringDepartment": "Physical Education", "paperName": "Fitness and wellness" },
-    { "paperType": "GE", "offeringDepartment": "Political Science", "paperName": "Ideas in Indian Political Thought" },
-    { "paperType": "GE", "offeringDepartment": "Political Science", "paperName": "Governance: Issues and Challenges" },
-    { "paperType": "GE", "offeringDepartment": "Commerce", "paperName": "Business Organization" },
-    { "paperType": "GE", "offeringDepartment": "Physics", "paperName": "Electricity and Magnetism" },
-    { "paperType": "AEC", "offeringDepartment": "Environmental Science", "paperName": "Environmental Science (EVS)", "eligibilityNotes": "B.A. Prog., B.Com.(H), B.A.(Hons.) Business Economics" },
-    { "paperType": "AEC", "offeringDepartment": "Hindi", "paperName": "Hindi (AEC)", "eligibilityNotes": "Other courses; option for students with no Hindi knowledge" },
-    { "paperType": "SEC", "offeringDepartment": "Journalism", "paperName": "Digital Film Production" }
+    {
+      "paperType": "SEC",
+      "paperName": "Creative Writings",
+      "department": "English"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Communication in Everyday Life",
+      "department": "English"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Personality Development and Communication",
+      "department": "Business Economics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "IT Skills and Data Analysis 1",
+      "department": "Economics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Basic IT tools",
+      "department": "Economics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Advanced Spreadsheet tools",
+      "department": "Economics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Content Development and media for children",
+      "department": "Journalism"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Patkatha Lekhan",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Rachnatmak Lekhan",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Latex typesetting for beginners",
+      "department": "Mathematics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Network Flows",
+      "department": "Mathematics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Political Leadership and Communication",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Negotiation and Leadership",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Finance for Everyone",
+      "department": "Commerce"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Design thinking",
+      "department": "Electronics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Basic IT tools",
+      "department": "Electronics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "fundamentals of python programming",
+      "department": "Electronics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Basic IT tools",
+      "department": "Physics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Practices in Horoscope – 1",
+      "department": "Physics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Prospecting ewaste for sustainability",
+      "department": "Physics"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Dairy Processing",
+      "department": "Chemistry"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Ecology and Literature",
+      "department": "English"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Emotional Intelligence",
+      "department": "English"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "भारतीय भक्ति परम्परा और मानव मूल्य",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "साहित्य, संस्कृति और सिनेमा",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Vedic Mathematics-I",
+      "department": "Mathematics"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Ethics and Values in Ancient Indian Traditions",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Constitutional Values and Fundamental Duties",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Swachh Bharat",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Vedic Mathematics 1",
+      "department": "Physics"
+    },
+    {
+      "paperType": "VAC",
+      "paperName": "Fit India",
+      "department": "Physical Education"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Indian English Literatures",
+      "department": "English"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Principles of Microeconomics",
+      "department": "Business Economics"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Object Oriented Programming using C++",
+      "department": "Computer Science"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Principles of Microeconomics 1",
+      "department": "Economics"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Delhi through Ages",
+      "department": "History"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Hindi Cinema aur uska adhyayan",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Basics of Journalism",
+      "department": "Journalism"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Fundamental of calculus",
+      "department": "Mathematics"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Fitness and wellness",
+      "department": "Physical Education"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Ideas in Indian Political Thought",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Governance: Issues and Challenges",
+      "department": "Political Science"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Business Organization",
+      "department": "Commerce"
+    },
+    {
+      "paperType": "GE",
+      "paperName": "Electricity and Magnetism",
+      "department": "Physics"
+    },
+    {
+      "paperType": "AEC",
+      "paperName": "Environmental Science (EVS)",
+      "eligibilityNotes": "B.A. Prog., B.Com.(H), B.A.(Hons.) Business Economics",
+      "department": "Environmental Science"
+    },
+    {
+      "paperType": "AEC",
+      "paperName": "Hindi (AEC)",
+      "eligibilityNotes": "Other courses; option for students with no Hindi knowledge",
+      "department": "Hindi"
+    },
+    {
+      "paperType": "SEC",
+      "paperName": "Digital Film Production",
+      "department": "Journalism"
+    }
   ]
 }

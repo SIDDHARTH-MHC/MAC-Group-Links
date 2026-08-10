@@ -57,9 +57,9 @@ export default async function PapersByTypePage({ params, searchParams }: Props) 
                 <div>
                   <p className="font-medium">{paper.paperName}</p>
                   <p className="text-sm text-amber-900/60">
-                    {paper.offeringDepartment}
-                    {paper.departmentRoom
-                      ? ` · Department room ${paper.departmentRoom}`
+                    {paper.department.name}
+                    {paper.department.departmentRoom
+                      ? ` · Department room ${paper.department.departmentRoom}`
                       : ""}
                   </p>
                   {paper.eligibilities.length > 0 && (

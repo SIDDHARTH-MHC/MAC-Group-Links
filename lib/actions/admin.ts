@@ -10,7 +10,9 @@ import {
   semesterFormSchema,
   adminLoginSchema,
 } from "@/lib/validations";
-import { normalizeGroupLink } from "@/lib/constants";
+import { normalizeGroupLink, groupLinkFields } from "@/lib/constants";
+import { findDepartmentByName, duplicateGroupLinkMessage } from "@/lib/db/departments";
+import { loadCoursesByName, mapImportEligibilities } from "@/lib/admin/import-papers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -51,7 +53,7 @@ function mapEligibilityCreate(
   eligibilities: {
     courseId?: string;
     year?: number;
-    combination?: string;
+    combination?: string | null;
     notes?: string;
     appliesToAll?: boolean;
   }[]
@@ -59,7 +61,7 @@ function mapEligibilityCreate(
   return eligibilities.map((e) => ({
     courseId: e.courseId || null,
     year: e.year ?? null,
-    combination: e.combination,
+    combination: e.combination ?? undefined,
     notes: e.notes,
     appliesToAll: e.appliesToAll ?? false,
   }));
@@ -71,7 +73,7 @@ export async function createSemester(input: unknown): Promise<ActionResult> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" };
   }
-  const { academicYear, semesterNumber, makeActive } = parsed.data;
+  const { academicYear, semesterNumber } = parsed.data;
 
   const existing = await prisma.semester.findUnique({
     where: {
@@ -82,31 +84,32 @@ export async function createSemester(input: unknown): Promise<ActionResult> {
     return { ok: false, error: "This semester already exists." };
   }
 
+  let newId = "";
   await prisma.$transaction(async (tx) => {
-    if (makeActive) {
-      await tx.semester.updateMany({
-        where: { status: "ACTIVE" },
-        data: { status: "ARCHIVED" },
-      });
-    }
-    await tx.semester.create({
+    await tx.semester.updateMany({
+      where: { status: "ACTIVE" },
+      data: { status: "ARCHIVED" },
+    });
+    const sem = await tx.semester.create({
       data: {
         academicYear,
         semesterNumber,
-        status: makeActive ? "ACTIVE" : "ARCHIVED",
+        status: "ACTIVE",
       },
     });
+    newId = sem.id;
   });
 
   await logAdminAction(
     "SEMESTER_CREATED",
-    `Created semester ${academicYear} sem ${semesterNumber}`,
+    `Created empty semester ${academicYear} sem ${semesterNumber}`,
     "Semester",
-    academicYear
+    newId
   );
   revalidatePath("/admin");
+  revalidatePath("/admin/papers");
   revalidatePath("/");
-  return { ok: true, message: "Semester created." };
+  return { ok: true, message: "Semester created successfully.", id: newId };
 }
 
 export async function setActiveSemester(semesterId: string): Promise<ActionResult> {
@@ -140,8 +143,7 @@ export async function createPaper(input: unknown): Promise<ActionResult> {
       paperType: d.paperType,
       paperName: d.paperName.trim(),
       paperCode: d.paperCode,
-      offeringDepartment: d.offeringDepartment.trim(),
-      departmentRoom: d.departmentRoom,
+      departmentId: d.departmentId,
       description: d.description,
       sourceDocumentUrl: d.sourceDocumentUrl || undefined,
       eligibilityNotes: d.eligibilityNotes,
@@ -171,8 +173,7 @@ export async function updatePaper(
         paperType: d.paperType,
         paperName: d.paperName.trim(),
         paperCode: d.paperCode,
-        offeringDepartment: d.offeringDepartment.trim(),
-        departmentRoom: d.departmentRoom,
+        departmentId: d.departmentId,
         description: d.description,
         sourceDocumentUrl: d.sourceDocumentUrl || undefined,
         eligibilityNotes: d.eligibilityNotes,
@@ -209,21 +210,73 @@ export async function importPapers(
   }
   const parsed = paperImportSchema.safeParse(raw);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
+    const issues = parsed.error.issues
+      .slice(0, 8)
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("\n");
+    return { ok: false, error: issues || "Invalid import data" };
+  }
+
+  const coursesByName = await loadCoursesByName();
+  const errors: string[] = [];
+
+  for (let i = 0; i < parsed.data.length; i++) {
+    const row = parsed.data[i];
+    const rowLabel = `Row ${i + 1} (${row.paperName})`;
+    const dept = await findDepartmentByName(row.department);
+    if (!dept) {
+      errors.push(`${rowLabel}: Unknown department "${row.department}"`);
+      continue;
+    }
+    const { error: eligError } = mapImportEligibilities(
+      row.eligibilities,
+      coursesByName
+    );
+    if (eligError) {
+      errors.push(`${rowLabel}: ${eligError}`);
+    }
+    const dup = await prisma.paper.findFirst({
+      where: {
+        semesterId,
+        paperType: row.paperType,
+        paperName: row.paperName.trim(),
+        departmentId: dept.id,
+      },
+    });
+    if (dup) {
+      errors.push(`${rowLabel}: Paper already exists in this semester`);
+    }
+  }
+
+  if (errors.length > 0) {
+    return {
+      ok: false,
+      error: `Import failed — fix the following and try again:\n${errors.join("\n")}`,
+    };
   }
 
   await prisma.$transaction(async (tx) => {
     for (const p of parsed.data) {
+      const dept = await tx.department.findFirst({
+        where: {
+          name: { equals: p.department.trim(), mode: "insensitive" },
+        },
+      });
+      if (!dept) throw new Error("Department missing during import");
+      const { eligibilities } = mapImportEligibilities(
+        p.eligibilities,
+        coursesByName
+      );
       await tx.paper.create({
         data: {
           semesterId,
           paperType: p.paperType,
           paperName: p.paperName.trim(),
           paperCode: p.paperCode,
-          offeringDepartment: p.offeringDepartment.trim(),
-          departmentRoom: p.departmentRoom,
+          departmentId: dept.id,
           sourceDocumentUrl: p.sourceDocumentUrl,
-          eligibilities: { create: mapEligibilityCreate(p.eligibilities) },
+          eligibilityNotes: p.eligibilityNotes,
+          eligibilities: { create: eligibilities },
         },
       });
     }
@@ -246,12 +299,13 @@ export async function createGroup(input: unknown): Promise<ActionResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" };
   }
   const d = parsed.data;
-  const link = d.groupLink ? normalizeGroupLink(d.groupLink) : null;
-  if (link) {
-    const dup = await prisma.group.findFirst({
-      where: { paperId: d.paperId, groupLink: link },
-    });
-    if (dup) return { ok: false, error: "Duplicate group link for this paper." };
+  const linkFields = d.groupLink ? groupLinkFields(d.groupLink) : null;
+  if (linkFields) {
+    const dupMsg = await duplicateGroupLinkMessage(
+      d.paperId,
+      linkFields.normalizedGroupLink
+    );
+    if (dupMsg) return { ok: false, error: dupMsg };
   }
 
   const group = await prisma.group.create({
@@ -264,7 +318,8 @@ export async function createGroup(input: unknown): Promise<ActionResult> {
       startTime: d.startTime,
       endTime: d.endTime,
       groupPlatform: d.groupPlatform,
-      groupLink: link,
+      groupLink: linkFields?.groupLink ?? null,
+      normalizedGroupLink: linkFields?.normalizedGroupLink ?? null,
       contributorName: d.contributorName,
       contributorType: d.contributorType,
       eligibilities: { create: mapEligibilityCreate(d.eligibilities) },
@@ -285,7 +340,15 @@ export async function updateGroup(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" };
   }
   const d = parsed.data;
-  const link = d.groupLink ? normalizeGroupLink(d.groupLink) : null;
+  const linkFields = d.groupLink ? groupLinkFields(d.groupLink) : null;
+  if (linkFields) {
+    const dupMsg = await duplicateGroupLinkMessage(
+      d.paperId,
+      linkFields.normalizedGroupLink,
+      groupId
+    );
+    if (dupMsg) return { ok: false, error: dupMsg };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.groupEligibility.deleteMany({ where: { groupId } });
@@ -299,7 +362,8 @@ export async function updateGroup(
         startTime: d.startTime,
         endTime: d.endTime,
         groupPlatform: d.groupPlatform,
-        groupLink: link,
+        groupLink: linkFields?.groupLink ?? null,
+        normalizedGroupLink: linkFields?.normalizedGroupLink ?? null,
         contributorName: d.contributorName,
         contributorType: d.contributorType,
         eligibilities: { create: mapEligibilityCreate(d.eligibilities) },
@@ -355,13 +419,9 @@ export async function approveContribution(
     return { ok: false, error: "Contribution not found or already processed" };
   }
 
-  const link = normalizeGroupLink(c.groupLink);
-  const dup = await prisma.group.findFirst({
-    where: { paperId: c.paperId, groupLink: link },
-  });
-  if (dup) {
-    return { ok: false, error: "Group link already exists on this paper." };
-  }
+  const normalized = c.normalizedGroupLink || normalizeGroupLink(c.groupLink);
+  const dupMsg = await duplicateGroupLinkMessage(c.paperId, normalized);
+  if (dupMsg) return { ok: false, error: dupMsg };
 
   await prisma.$transaction(async (tx) => {
     const group = await tx.group.create({
@@ -374,7 +434,8 @@ export async function approveContribution(
         startTime: c.startTime,
         endTime: c.endTime,
         groupPlatform: c.groupPlatform,
-        groupLink: link,
+        groupLink: c.groupLink.trim(),
+        normalizedGroupLink: normalized,
         contributorName: c.contributorName,
         contributorType: c.contributorType,
         contributionId: c.id,
@@ -426,18 +487,31 @@ export async function applySuggestion(suggestionId: string): Promise<ActionResul
     return { ok: false, error: "Suggestion not found" };
   }
 
-  if (s.type === "NEW_PAPER" && s.paperType && s.paperName && s.offeringDepartment) {
+  if (
+    s.type === "NEW_PAPER" &&
+    s.paperType &&
+    s.paperName &&
+    s.suggestedDepartmentName
+  ) {
     const semester = await prisma.semester.findFirst({
       where: { status: "ACTIVE" },
     });
     if (!semester) return { ok: false, error: "No active semester" };
+    let dept = await findDepartmentByName(s.suggestedDepartmentName);
+    if (!dept) {
+      dept = await prisma.department.create({
+        data: {
+          name: s.suggestedDepartmentName.trim(),
+          departmentRoom: s.suggestedDepartmentRoom ?? undefined,
+        },
+      });
+    }
     await prisma.paper.create({
       data: {
         semesterId: semester.id,
         paperType: s.paperType,
         paperName: s.paperName,
-        offeringDepartment: s.offeringDepartment,
-        departmentRoom: s.departmentRoom,
+        departmentId: dept.id,
         sourceDocumentUrl: s.sourceDocumentUrl,
         eligibilities: {
           create: s.eligibilities.map((e) => ({
@@ -452,9 +526,21 @@ export async function applySuggestion(suggestionId: string): Promise<ActionResul
     });
   } else if (s.groupId && s.suggestedValue) {
     if (s.type === "WRONG_GROUP_LINK") {
+      const paperId = s.paperId ?? s.group?.paperId;
+      if (!paperId) return { ok: false, error: "Missing paper for group link update" };
+      const fields = groupLinkFields(s.suggestedValue);
+      const dupMsg = await duplicateGroupLinkMessage(
+        paperId,
+        fields.normalizedGroupLink,
+        s.groupId
+      );
+      if (dupMsg) return { ok: false, error: dupMsg };
       await prisma.group.update({
         where: { id: s.groupId },
-        data: { groupLink: normalizeGroupLink(s.suggestedValue) },
+        data: {
+          groupLink: fields.groupLink,
+          normalizedGroupLink: fields.normalizedGroupLink,
+        },
       });
     } else if (s.type === "WRONG_TEACHER") {
       await prisma.group.update({
@@ -479,9 +565,13 @@ export async function applySuggestion(suggestionId: string): Promise<ActionResul
         data: { paperName: s.suggestedValue },
       });
     } else if (s.type === "WRONG_DEPARTMENT") {
+      const dept = await findDepartmentByName(s.suggestedValue);
+      if (!dept) {
+        return { ok: false, error: `Unknown department: ${s.suggestedValue}` };
+      }
       await prisma.paper.update({
         where: { id: s.paperId },
-        data: { offeringDepartment: s.suggestedValue },
+        data: { departmentId: dept.id },
       });
     }
   }

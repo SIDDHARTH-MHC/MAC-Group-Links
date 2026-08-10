@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { PaperType } from "@prisma/client";
 
 const paperInclude = {
+  department: true,
   eligibilities: { include: { course: true } },
   groups: {
     where: { status: "ACTIVE" as const },
@@ -32,17 +33,20 @@ export async function listPublicPapers(
       semesterId,
       archivedAt: null,
       ...(paperType ? { paperType } : {}),
-      ...(department ? { offeringDepartment: department } : {}),
+      ...(department
+        ? { department: { name: { equals: department, mode: "insensitive" } } }
+        : {}),
       ...(search
         ? {
             OR: [
               { paperName: { contains: search, mode: "insensitive" } },
-              { offeringDepartment: { contains: search, mode: "insensitive" } },
+              { department: { name: { contains: search, mode: "insensitive" } } },
             ],
           }
         : {}),
     },
     include: {
+      department: true,
       eligibilities: { include: { course: true } },
       _count: { select: { groups: true } },
     },
@@ -60,7 +64,7 @@ export async function searchPapers(semesterId: string, query: string) {
       archivedAt: null,
       OR: [
         { paperName: { contains: q, mode: "insensitive" } },
-        { offeringDepartment: { contains: q, mode: "insensitive" } },
+        { department: { name: { contains: q, mode: "insensitive" } } },
         {
           groups: {
             some: {
@@ -81,6 +85,7 @@ export async function searchPapers(semesterId: string, query: string) {
       ],
     },
     include: {
+      department: true,
       eligibilities: { include: { course: true } },
     },
     take: 40,
@@ -96,7 +101,7 @@ export async function getRecentGroups(semesterId: string, limit = 6) {
       paper: { semesterId, archivedAt: null },
     },
     include: {
-      paper: true,
+      paper: { include: { department: true } },
       eligibilities: { include: { course: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -107,9 +112,9 @@ export async function getRecentGroups(semesterId: string, limit = 6) {
 export async function listDepartments(semesterId: string) {
   const rows = await prisma.paper.findMany({
     where: { semesterId, archivedAt: null },
-    distinct: ["offeringDepartment"],
-    select: { offeringDepartment: true },
-    orderBy: { offeringDepartment: "asc" },
+    select: { department: { select: { name: true } } },
+    distinct: ["departmentId"],
+    orderBy: { department: { name: "asc" } },
   });
-  return rows.map((r) => r.offeringDepartment);
+  return rows.map((r) => r.department.name);
 }

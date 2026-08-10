@@ -1,0 +1,19 @@
+[
+  { "name": "English", "departmentRoom": "125" },
+  { "name": "Business Economics", "departmentRoom": "336" },
+  { "name": "Computer Science", "departmentRoom": "218" },
+  { "name": "Economics", "departmentRoom": "232" },
+  { "name": "History", "departmentRoom": "232" },
+  { "name": "Hindi", "departmentRoom": "131" },
+  { "name": "Journalism", "departmentRoom": "Media Lab" },
+  { "name": "Mathematics", "departmentRoom": "231" },
+  { "name": "Political Science", "departmentRoom": "126" },
+  { "name": "Commerce", "departmentRoom": "130" },
+  { "name": "Electronics", "departmentRoom": "331" },
+  { "name": "Physics", "departmentRoom": "113" },
+  { "name": "Physical Education", "departmentRoom": "22" },
+  { "name": "Chemistry", "departmentRoom": "Chemistry Lab" },
+  { "name": "Biology", "departmentRoom": "Biology Lab" },
+  { "name": "Environmental Science", "departmentRoom": null },
+  { "name": "Other", "departmentRoom": null }
+]
