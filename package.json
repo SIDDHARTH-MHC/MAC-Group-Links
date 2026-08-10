@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT=120000 prisma migrate deploy && npm run build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",

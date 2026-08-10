@@ -100,10 +100,12 @@ Re-run `catalogue:extract` when MAC publishes new PDFs; adjust `scripts/extract_
 ## Deploy (Vercel)
 
 1. Create a Postgres database (Neon, Supabase, Railway, etc.)
-2. Set all environment variables in the Vercel project
-3. Build command: `npm run build`
-4. Add a deploy step or post-deploy hook: `npx prisma migrate deploy`
-5. Ensure `postinstall` runs `prisma generate` (already in `package.json`)
+2. Set all environment variables in the Vercel project (`DATABASE_URL`, admin auth, `SESSION_SECRET`)
+3. **Build command** is defined in `vercel.json` as `npm run vercel-build` (runs `prisma migrate deploy` with a 120s advisory lock timeout, then `next build`). Do not run `db:seed` against production while a deploy is in progress — both compete for the same migration lock.
+4. For Neon, prefer a **direct** (non-pooler) connection for migrations if you add `directUrl` later; the pooler URL is fine for the app at runtime.
+5. `postinstall` runs `prisma generate` (see `package.json`)
+
+If a deploy fails with **P1002 advisory lock**, wait for any local `npm run db:seed` to finish and redeploy, or run migrations once locally with `npm run db:migrate` and temporarily set Vercel build to `npm run build` only.
 
 ## Data model notes
 
