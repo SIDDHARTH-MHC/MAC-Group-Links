@@ -1,0 +1,281 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { submitGroupContribution } from "@/lib/actions/public";
+import { ContributorType, GroupPlatform } from "@prisma/client";
+import type { Course } from "@prisma/client";
+
+export function ContributeForm({
+  papers,
+  courses,
+  initialPaperId,
+}: {
+  papers: { id: string; paperName: string; paperType: string }[];
+  courses: Course[];
+  initialPaperId?: string;
+}) {
+  const searchParams = useSearchParams();
+  const urlPaperId = searchParams.get("paperId");
+  const [paperId, setPaperId] = useState(initialPaperId ?? urlPaperId ?? "");
+  const [appliesMode, setAppliesMode] = useState<
+    "mine" | "select" | "all"
+  >("select");
+  const [courseId, setCourseId] = useState("");
+  const [year, setYear] = useState("2");
+  const [groupLink, setGroupLink] = useState("");
+  const [platform, setPlatform] = useState<GroupPlatform>("WHATSAPP");
+  const [teacherName, setTeacherName] = useState("");
+  const [actualClassRoom, setActualClassRoom] = useState("");
+  const [days, setDays] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [sectionName, setSectionName] = useState("");
+  const [contributorName, setContributorName] = useState("");
+  const [contributorType, setContributorType] = useState<ContributorType>(
+    "STUDENT"
+  );
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null
+  );
+  const [pending, startTransition] = useTransition();
+
+  function applyMinePrefs() {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("mac-group-links-prefs");
+      if (!raw) return;
+      const prefs = JSON.parse(raw) as { courseId: string; year: number };
+      setCourseId(prefs.courseId);
+      setYear(String(prefs.year));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function submit() {
+    if (!paperId) {
+      setMessage({ ok: false, text: "Select a paper" });
+      return;
+    }
+    const eligibilities =
+      appliesMode === "all"
+        ? [{ appliesToAll: true }]
+        : [
+            {
+              courseId: courseId || undefined,
+              year: Number(year),
+            },
+          ];
+
+    startTransition(async () => {
+      const res = await submitGroupContribution({
+        paperId,
+        sectionName: sectionName || undefined,
+        teacherName: teacherName || undefined,
+        actualClassRoom: actualClassRoom || undefined,
+        days: days || undefined,
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
+        groupPlatform: platform,
+        groupLink,
+        contributorName: contributorName || undefined,
+        contributorType,
+        appliesToAll: appliesMode === "all",
+        eligibilities,
+      });
+      setMessage({
+        ok: res.ok,
+        text: res.ok ? res.message : res.error,
+      });
+    });
+  }
+
+  return (
+    <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-amber-100 bg-white p-5">
+      <div>
+        <Label>Paper</Label>
+        <Select value={paperId} onValueChange={(v) => setPaperId(v ?? "")}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select paper" />
+          </SelectTrigger>
+          <SelectContent>
+            {papers.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                [{p.paperType}] {p.paperName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Who is this group for?</Label>
+        <Select
+          value={appliesMode}
+          onValueChange={(v) => {
+            const mode = v as "mine" | "select" | "all";
+            setAppliesMode(mode);
+            if (mode === "mine") applyMinePrefs();
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mine">My course/year (from My Course)</SelectItem>
+            <SelectItem value="select">Select course/year</SelectItem>
+            <SelectItem value="all">All students taking this paper</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {appliesMode === "select" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label>Course</Label>
+            <Select value={courseId} onValueChange={(v) => setCourseId(v ?? "")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Course" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Year</Label>
+            <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1st Year</SelectItem>
+                <SelectItem value="2">2nd Year</SelectItem>
+                <SelectItem value="3">3rd Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <Label>Group link</Label>
+        <Input
+          value={groupLink}
+          onChange={(e) => setGroupLink(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+        />
+      </div>
+
+      <div>
+        <Label>Platform</Label>
+        <Select
+          value={platform}
+          onValueChange={(v) => setPlatform(v as GroupPlatform)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+            <SelectItem value="TELEGRAM">Telegram</SelectItem>
+            <SelectItem value="OTHER">Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <details className="text-sm">
+        <summary className="cursor-pointer text-amber-800">
+          Optional details
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div>
+            <Label>Section name</Label>
+            <Input value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Teacher</Label>
+            <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Actual class room</Label>
+            <Input
+              value={actualClassRoom}
+              onChange={(e) => setActualClassRoom(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>Days</Label>
+            <Input value={days} onChange={(e) => setDays(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Start time</Label>
+              <Input value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
+            <div>
+              <Label>End time</Label>
+              <Input value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label>Your name</Label>
+            <Input
+              value={contributorName}
+              onChange={(e) => setContributorName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>You are</Label>
+            <Select
+              value={contributorType}
+              onValueChange={(v) => setContributorType(v as ContributorType)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="STUDENT">Student</SelectItem>
+                <SelectItem value="PROFESSOR">Professor</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </details>
+
+      {message && (
+        <p
+          className={
+            message.ok ? "text-sm text-emerald-800" : "text-sm text-red-700"
+          }
+        >
+          {message.text}
+        </p>
+      )}
+
+      <Button
+        className="w-full"
+        disabled={pending}
+        onClick={submit}
+      >
+        {pending ? "Submitting…" : "Submit"}
+      </Button>
+    </div>
+  );
+}

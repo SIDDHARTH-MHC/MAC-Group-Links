@@ -1,0 +1,168 @@
+import {
+  PrismaClient,
+  GroupPlatform,
+  ContributorType,
+  PaperType,
+} from "@prisma/client";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const prisma = new PrismaClient();
+
+const SAMPLE_LINK = "https://example.com/sample-mac-group-do-not-use";
+
+type SeedPaper = {
+  paperType: string;
+  offeringDepartment: string;
+  paperName: string;
+  eligibilityNotes?: string;
+};
+
+async function main() {
+  await prisma.groupReport.deleteMany();
+  await prisma.suggestion.deleteMany();
+  await prisma.groupContribution.deleteMany();
+  await prisma.group.deleteMany();
+  await prisma.paperEligibility.deleteMany();
+  await prisma.paper.deleteMany();
+  await prisma.semester.deleteMany();
+  await prisma.course.deleteMany();
+  await prisma.adminAuditLog.deleteMany();
+
+  const courses = await Promise.all([
+    prisma.course.create({
+      data: { name: "BA Programme", shortName: "BA Prog" },
+    }),
+    prisma.course.create({
+      data: { name: "B.Com", shortName: "B.Com" },
+    }),
+    prisma.course.create({
+      data: { name: "B.Com (Hons)", shortName: "B.Com(H)" },
+    }),
+    prisma.course.create({
+      data: { name: "B.A. (Hons) Economics", shortName: "BA Eco H" },
+    }),
+    prisma.course.create({
+      data: { name: "B.A. (Hons) Business Economics", shortName: "BA BE H" },
+    }),
+  ]);
+
+  const baProg = courses[0];
+
+  const semester = await prisma.semester.create({
+    data: {
+      academicYear: "2026-27",
+      semesterNumber: 1,
+      status: "ACTIVE",
+    },
+  });
+
+  const raw = JSON.parse(
+    readFileSync(join(__dirname, "data/papers-dev.json"), "utf-8")
+  ) as {
+    departmentRooms: Record<string, string>;
+    papers: SeedPaper[];
+  };
+
+  const paperRecords: { id: string; paperName: string }[] = [];
+
+  for (const p of raw.papers) {
+    const departmentRoom = raw.departmentRooms[p.offeringDepartment] ?? null;
+    const paper = await prisma.paper.create({
+      data: {
+        semesterId: semester.id,
+        paperType: p.paperType as PaperType,
+        paperName: p.paperName,
+        offeringDepartment: p.offeringDepartment,
+        departmentRoom,
+        eligibilityNotes: p.eligibilityNotes,
+        eligibilities: {
+          create: [{ appliesToAll: true }],
+        },
+      },
+    });
+    paperRecords.push({ id: paper.id, paperName: paper.paperName });
+  }
+
+  const itSkills = paperRecords.find((p) =>
+    p.paperName.includes("IT Skills and Data Analysis")
+  );
+  const personality = paperRecords.find((p) =>
+    p.paperName.includes("Personality Development")
+  );
+  const digitalFilm = paperRecords.find((p) =>
+    p.paperName.includes("Digital Film Production")
+  );
+
+  if (itSkills) {
+    await prisma.group.create({
+      data: {
+        paperId: itSkills.id,
+        sectionName: "Group A",
+        teacherName: "Professor X (sample)",
+        actualClassRoom: "301",
+        days: "Tuesday, Friday",
+        startTime: "10:00 AM",
+        endTime: "11:00 AM",
+        groupPlatform: GroupPlatform.WHATSAPP,
+        groupLink: SAMPLE_LINK,
+        contributorType: ContributorType.OTHER,
+        contributorName: "Dev seed",
+        eligibilities: {
+          create: [{ courseId: baProg.id, year: 2 }],
+        },
+      },
+    });
+  }
+
+  if (personality) {
+    await prisma.group.create({
+      data: {
+        paperId: personality.id,
+        sectionName: "Section A",
+        teacherName: "Sample Faculty",
+        actualClassRoom: "205",
+        groupPlatform: GroupPlatform.TELEGRAM,
+        groupLink: SAMPLE_LINK,
+        eligibilities: {
+          create: [{ courseId: baProg.id, year: 2 }],
+        },
+      },
+    });
+  }
+
+  if (digitalFilm) {
+    await prisma.group.create({
+      data: {
+        paperId: digitalFilm.id,
+        sectionName: "Group A",
+        teacherName: "Vinod Kr Verma (sample)",
+        actualClassRoom: "Media Lab",
+        days: "Mon, Wed",
+        startTime: "2:00 PM",
+        groupPlatform: GroupPlatform.WHATSAPP,
+        groupLink: SAMPLE_LINK,
+        eligibilities: {
+          create: [
+            { courseId: baProg.id, year: 2 },
+            { courseId: baProg.id, year: 3 },
+          ],
+        },
+      },
+    });
+  }
+
+  console.log("Seed complete:", {
+    semester: semester.academicYear,
+    papers: paperRecords.length,
+    courses: courses.length,
+  });
+}
+
+main()
+  .then(() => prisma.$disconnect())
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

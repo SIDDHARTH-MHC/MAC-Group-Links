@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SemesterStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum PaperType {
+  SEC
+  VAC
+  GE
+  DSE
+  AEC
+  CORE
+}
+
+enum GroupPlatform {
+  WHATSAPP
+  TELEGRAM
+  OTHER
+}
+
+enum ContributorType {
+  STUDENT
+  PROFESSOR
+  OTHER
+}
+
+enum GroupStatus {
+  ACTIVE
+  EXPIRED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SuggestionType {
+  PAPER_NAME_WRONG
+  WRONG_DEPARTMENT
+  WRONG_ELIGIBILITY
+  MISSING_COURSE_YEAR
+  WRONG_TEACHER
+  WRONG_SECTION
+  WRONG_CLASSROOM
+  WRONG_GROUP_LINK
+  LINK_EXPIRED
+  PAPER_MISSING
+  NEW_PAPER
+  OTHER
+}
+
+enum ReportReason {
+  LINK_DOESNT_WORK
+  WRONG_PAPER
+  WRONG_COURSE_YEAR
+  WRONG_SECTION
+  OLD_GROUP
+  NOT_COLLEGE_GROUP
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  IGNORED
+  RESOLVED
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  SEMESTER_CREATED
+  SEMESTER_ACTIVATED
+  SEMESTER_ARCHIVED
+  PAPER_CREATED
+  PAPER_UPDATED
+  PAPER_DELETED
+  PAPER_IMPORTED
+  GROUP_CREATED
+  GROUP_UPDATED
+  GROUP_DELETED
+  GROUP_APPROVED
+  GROUP_REJECTED
+  SUGGESTION_APPLIED
+  SUGGESTION_REJECTED
+  REPORT_HANDLED
+}
+
+model Semester {
+  id             String         @id @default(cuid())
+  academicYear   String
+  semesterNumber Int
+  status         SemesterStatus @default(ARCHIVED)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  papers         Paper[]
+
+  @@unique([academicYear, semesterNumber])
+  @@index([status])
+}
+
+model Course {
+  id                            String                         @id @default(cuid())
+  name                          String
+  shortName                     String
+  active                        Boolean                        @default(true)
+  paperEligibilities            PaperEligibility[]
+  groupEligibilities            GroupEligibility[]
+  contributionEligibilities     GroupContributionEligibility[]
+  suggestionEligibilities       SuggestionEligibility[]
+}
+
+model Paper {
+  id                 String             @id @default(cuid())
+  semesterId         String
+  semester           Semester           @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  paperType          PaperType
+  paperName          String
+  paperCode          String?
+  offeringDepartment String
+  departmentRoom     String?
+  description        String?
+  sourceDocumentUrl  String?
+  eligibilityNotes   String?
+  archivedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  eligibilities      PaperEligibility[]
+  groups             Group[]
+  contributions      GroupContribution[]
+  suggestions        Suggestion[]
+  reports            GroupReport[]
+
+  @@index([semesterId, paperType])
+  @@index([paperName])
+  @@index([offeringDepartment])
+}
+
+model PaperEligibility {
+  id           String  @id @default(cuid())
+  paperId      String
+  paper        Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  courseId     String?
+  course       Course? @relation(fields: [courseId], references: [id])
+  year         Int?
+  combination  String?
+  notes        String?
+  appliesToAll Boolean @default(false)
+
+  @@index([paperId])
+  @@index([courseId])
+}
+
+model Group {
+  id               String             @id @default(cuid())
+  paperId          String
+  paper            Paper              @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  sectionName      String
+  teacherName      String?
+  actualClassRoom  String?
+  days             String?
+  startTime        String?
+  endTime          String?
+  groupPlatform    GroupPlatform      @default(WHATSAPP)
+  groupLink        String?
+  status           GroupStatus        @default(ACTIVE)
+  linkVerifiedAt   DateTime?
+  contributorName  String?
+  contributorType  ContributorType?
+  contributionId   String?            @unique
+  contribution     GroupContribution? @relation(fields: [contributionId], references: [id])
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  eligibilities    GroupEligibility[]
+  suggestions      Suggestion[]
+  reports          GroupReport[]
+
+  @@unique([paperId, groupLink])
+  @@index([paperId])
+  @@index([groupLink])
+}
+
+model GroupEligibility {
+  id           String  @id @default(cuid())
+  groupId      String
+  group        Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  courseId     String?
+  course       Course? @relation(fields: [courseId], references: [id])
+  year         Int?
+  combination  String?
+  notes        String?
+  appliesToAll Boolean @default(false)
+
+  @@index([groupId])
+}
+
+model GroupContribution {
+  id              String                         @id @default(cuid())
+  paperId         String
+  paper           Paper                          @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  sectionName     String?
+  teacherName     String?
+  actualClassRoom String?
+  days            String?
+  startTime       String?
+  endTime         String?
+  groupPlatform   GroupPlatform                  @default(WHATSAPP)
+  groupLink       String
+  contributorName String?
+  contributorType ContributorType?
+  status          ReviewStatus                   @default(PENDING)
+  appliesToAll    Boolean                        @default(false)
+  adminNotes      String?
+  createdAt       DateTime                       @default(now())
+  updatedAt       DateTime                       @updatedAt
+  eligibilities   GroupContributionEligibility[]
+  approvedGroup   Group?
+
+  @@index([status])
+  @@index([paperId])
+}
+
+model GroupContributionEligibility {
+  id             String            @id @default(cuid())
+  contributionId String
+  contribution   GroupContribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  courseId       String?
+  course         Course?           @relation(fields: [courseId], references: [id])
+  year           Int?
+  combination    String?
+  notes          String?
+  appliesToAll   Boolean           @default(false)
+
+  @@index([contributionId])
+}
+
+model Suggestion {
+  id             String                  @id @default(cuid())
+  type           SuggestionType
+  description    String
+  suggestedValue String?
+  paperId        String?
+  paper          Paper?                  @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  groupId        String?
+  group          Group?                  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  paperType      PaperType?
+  paperName      String?
+  offeringDepartment String?
+  departmentRoom String?
+  sourceDocumentUrl String?
+  contributorName String?
+  contributorType ContributorType?
+  status         ReviewStatus            @default(PENDING)
+  adminNotes     String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  eligibilities  SuggestionEligibility[]
+
+  @@index([status])
+}
+
+model SuggestionEligibility {
+  id           String     @id @default(cuid())
+  suggestionId String
+  suggestion   Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  courseId     String?
+  course       Course?    @relation(fields: [courseId], references: [id])
+  year         Int?
+  combination  String?
+  notes        String?
+  appliesToAll Boolean    @default(false)
+
+  @@index([suggestionId])
+}
+
+model GroupReport {
+  id          String       @id @default(cuid())
+  groupId     String
+  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paperId     String
+  paper       Paper        @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  reason      ReportReason
+  description String?
+  reporterName String?
+  status      ReportStatus @default(PENDING)
+  adminNotes  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status])
+}
+
+model AdminAuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  entityType  String?
+  entityId    String?
+  description String
+  createdAt   DateTime    @default(now())
+
+  @@index([createdAt])
+}

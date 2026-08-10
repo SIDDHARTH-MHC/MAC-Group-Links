@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mac-group-links-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mac
+      POSTGRES_PASSWORD: mac
+      POSTGRES_DB: mac_group_links
+    ports:
+      - "5433:5432"
+    volumes:
+      - mac_group_links_pg:/var/lib/postgresql/data
+
+volumes:
+  mac_group_links_pg:
