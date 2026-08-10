@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 
 const links = [
   { href: "/about", label: "About", description: "What this site is and how it works" },
-  { href: "/papers/sec", label: "Browse papers", description: "Start from SEC or pick another type on Home" },
+  { href: "/papers", label: "Browse papers", description: "SEC, VAC, GE, DSE, AEC, Core, and more" },
   { href: "/contribute", label: "Contribute", description: "Add links or suggest catalogue fixes" },
   { href: "/suggest", label: "Suggest an update", description: "Report wrong paper or group info" },
 ];
