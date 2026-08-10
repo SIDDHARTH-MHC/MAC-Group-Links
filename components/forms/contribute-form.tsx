@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,8 @@ import {
   MacCourseSelect,
   MacCourseYearRow,
 } from "@/components/forms/mac-course-select";
-import { ContributorType, GroupPlatform } from "@prisma/client";
+import { PAPER_TYPE_LABELS, PAPER_TYPES } from "@/lib/constants";
+import { ContributorType, GroupPlatform, type PaperType } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
 export function ContributeForm({
@@ -32,7 +33,30 @@ export function ContributeForm({
 }) {
   const searchParams = useSearchParams();
   const urlPaperId = searchParams.get("paperId");
-  const [paperId, setPaperId] = useState(initialPaperId ?? urlPaperId ?? "");
+  const resolvedInitialPaperId = initialPaperId ?? urlPaperId ?? "";
+  const initialPaper = resolvedInitialPaperId
+    ? papers.find((p) => p.id === resolvedInitialPaperId)
+    : undefined;
+
+  const [paperType, setPaperType] = useState<PaperType | "">(
+    () => (initialPaper?.paperType as PaperType | undefined) ?? "",
+  );
+  const [paperId, setPaperId] = useState(resolvedInitialPaperId);
+
+  const papersForType = useMemo(
+    () =>
+      paperType
+        ? papers.filter((p) => p.paperType === paperType)
+        : [],
+    [papers, paperType],
+  );
+
+  useEffect(() => {
+    if (!paperId) return;
+    if (!papersForType.some((p) => p.id === paperId)) {
+      setPaperId("");
+    }
+  }, [paperId, papersForType]);
   const [appliesMode, setAppliesMode] = useState<
     "mine" | "select" | "multiple" | "all"
   >("mine");
@@ -75,8 +99,12 @@ export function ContributeForm({
   }
 
   function submit() {
+    if (!paperType) {
+      setMessage({ ok: false, text: "Select a paper type (SEC, VAC, etc.)" });
+      return;
+    }
     if (!paperId) {
-      setMessage({ ok: false, text: "Select a paper" });
+      setMessage({ ok: false, text: "Select a paper name" });
       return;
     }
     const eligibilities =
@@ -127,12 +155,62 @@ export function ContributeForm({
   return (
     <div className="mx-auto max-w-[640px] space-y-6 rounded-xl border border-border bg-card p-5">
       <div className="space-y-1.5">
-        <Label htmlFor="paper-combobox">Paper</Label>
+        <Label htmlFor="paper-type">Paper type</Label>
+        <Select
+          value={paperType || undefined}
+          onValueChange={(v) => {
+            const next = v as PaperType;
+            setPaperType(next);
+            setPaperId("");
+            setMessage(null);
+          }}
+        >
+          <SelectTrigger id="paper-type" className="h-11 w-full">
+            <SelectValue placeholder="Choose SEC, VAC, GE, DSE, AEC, Core, or SBC" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAPER_TYPES.map((type) => {
+              const meta = PAPER_TYPE_LABELS[type];
+              const count = papers.filter((p) => p.paperType === type).length;
+              return (
+                <SelectItem key={type} value={type} disabled={count === 0}>
+                  {meta.short} — {meta.title}
+                  {count === 0 ? " (none this semester)" : ""}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <Label htmlFor="paper-combobox">Paper name</Label>
+          {paperType ? (
+            <span className="text-xs text-muted-foreground">
+              {papersForType.length} in catalogue
+            </span>
+          ) : null}
+        </div>
         <PaperCombobox
           id="paper-combobox"
-          papers={papers}
+          papers={papersForType}
           value={paperId}
-          onValueChange={setPaperId}
+          onValueChange={(id) => {
+            setPaperId(id);
+            setMessage(null);
+          }}
+          disabled={!paperType}
+          placeholder={
+            paperType
+              ? "Search and select paper…"
+              : "Choose paper type first"
+          }
+          emptyMessage={
+            paperType
+              ? "No papers match your search."
+              : "Choose a paper type first."
+          }
         />
       </div>
 

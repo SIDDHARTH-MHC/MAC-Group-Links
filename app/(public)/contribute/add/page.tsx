@@ -37,7 +37,7 @@ export default async function ContributeAddPage({ searchParams }: Props) {
           <p className="mt-4 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
             <span className="text-muted-foreground">Paper: </span>
             <span className="font-medium text-foreground">
-              {selectedPaper.paperName}
+              [{selectedPaper.paperType}] {selectedPaper.paperName}
             </span>
           </p>
         ) : null}
