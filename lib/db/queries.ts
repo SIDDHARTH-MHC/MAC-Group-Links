@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/db/prisma";
 import type { PaperType } from "@prisma/client";
+import {
+  activeGroupWithLinkWhere,
+  publicPaperCatalogueWhere,
+  paperOpenForContributionWhere,
+} from "@/lib/db/group-visibility";
 
 const paperInclude = {
   department: true,
   eligibilities: { include: { course: true } },
   groups: {
-    where: { status: "ACTIVE" as const },
+    where: activeGroupWithLinkWhere,
     include: { eligibilities: { include: { course: true } } },
     orderBy: { sectionName: "asc" as const },
   },
@@ -17,6 +22,7 @@ export async function getPublicPaper(paperId: string, semesterId: string) {
       id: paperId,
       semesterId,
       archivedAt: null,
+      ...publicPaperCatalogueWhere,
     },
     include: paperInclude,
   });
@@ -32,6 +38,7 @@ export async function listPublicPapers(
     where: {
       semesterId,
       archivedAt: null,
+      ...publicPaperCatalogueWhere,
       ...(paperType ? { paperType } : {}),
       ...(department
         ? { department: { name: { equals: department, mode: "insensitive" } } }
@@ -48,7 +55,11 @@ export async function listPublicPapers(
     include: {
       department: true,
       eligibilities: { include: { course: true } },
-      _count: { select: { groups: true } },
+      _count: {
+        select: {
+          groups: { where: activeGroupWithLinkWhere },
+        },
+      },
     },
     orderBy: [{ paperType: "asc" }, { paperName: "asc" }],
   });
@@ -62,6 +73,7 @@ export async function searchPapers(semesterId: string, query: string) {
     where: {
       semesterId,
       archivedAt: null,
+      ...publicPaperCatalogueWhere,
       OR: [
         { paperName: { contains: q, mode: "insensitive" } },
         { department: { name: { contains: q, mode: "insensitive" } } },
@@ -87,10 +99,26 @@ export async function searchPapers(semesterId: string, query: string) {
     include: {
       department: true,
       eligibilities: { include: { course: true } },
-      _count: { select: { groups: { where: { status: "ACTIVE" } } } },
+      _count: {
+        select: {
+          groups: { where: activeGroupWithLinkWhere },
+        },
+      },
     },
     take: 40,
     orderBy: { paperName: "asc" },
+  });
+}
+
+export async function listPapersOpenForContribution(semesterId: string) {
+  return prisma.paper.findMany({
+    where: {
+      semesterId,
+      archivedAt: null,
+      ...paperOpenForContributionWhere,
+    },
+    select: { id: true, paperName: true, paperType: true },
+    orderBy: [{ paperType: "asc" }, { paperName: "asc" }],
   });
 }
 
@@ -112,7 +140,11 @@ export async function getRecentGroups(semesterId: string, limit = 6) {
 
 export async function listDepartments(semesterId: string) {
   const rows = await prisma.paper.findMany({
-    where: { semesterId, archivedAt: null },
+    where: {
+      semesterId,
+      archivedAt: null,
+      ...publicPaperCatalogueWhere,
+    },
     select: { department: { select: { name: true } } },
     distinct: ["departmentId"],
     orderBy: { department: { name: "asc" } },

@@ -1,7 +1,19 @@
 import type { PaperType, GroupPlatform, ContributorType } from "@prisma/client";
 
+/** MAC catalogue uses six paper types only (University of Delhi / MAC). */
+export const MAC_PAPER_TYPES = [
+  "SEC",
+  "VAC",
+  "GE",
+  "DSE",
+  "AEC",
+  "CORE",
+] as const satisfies readonly PaperType[];
+
+export type MacCataloguePaperType = (typeof MAC_PAPER_TYPES)[number];
+
 export const PAPER_TYPE_LABELS: Record<
-  PaperType,
+  MacCataloguePaperType,
   { short: string; title: string }
 > = {
   SEC: { short: "SEC", title: "Skill Enhancement Course" },
@@ -10,10 +22,23 @@ export const PAPER_TYPE_LABELS: Record<
   DSE: { short: "DSE", title: "Discipline Specific Elective" },
   AEC: { short: "AEC", title: "Ability Enhancement Course" },
   CORE: { short: "CORE", title: "Core Course" },
-  SBC: { short: "SBC", title: "Skill Based Course" },
 };
 
-export const PAPER_TYPES = Object.keys(PAPER_TYPE_LABELS) as PaperType[];
+/** @deprecated Use MAC_PAPER_TYPES — kept as alias for existing imports. */
+export const PAPER_TYPES = [...MAC_PAPER_TYPES] as PaperType[];
+
+export function getPaperTypeLabel(type: PaperType): {
+  short: string;
+  title: string;
+} {
+  if (type === "SBC") {
+    return PAPER_TYPE_LABELS.SEC;
+  }
+  if (MAC_PAPER_TYPES.includes(type as MacCataloguePaperType)) {
+    return PAPER_TYPE_LABELS[type as MacCataloguePaperType];
+  }
+  return { short: type, title: type };
+}
 
 export const PLATFORM_LABELS: Record<GroupPlatform, string> = {
   WHATSAPP: "WhatsApp",
@@ -86,7 +111,7 @@ export function isValidGroupUrl(url: string): boolean {
 
 export function paperTypeFromParam(param: string): PaperType | null {
   const upper = param.toUpperCase();
-  if (PAPER_TYPES.includes(upper as PaperType)) {
+  if (MAC_PAPER_TYPES.includes(upper as MacCataloguePaperType)) {
     return upper as PaperType;
   }
   return null;

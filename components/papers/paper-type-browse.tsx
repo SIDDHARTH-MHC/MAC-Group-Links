@@ -191,7 +191,8 @@ export function PaperTypeBrowse({
 
       {filtered.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-muted-foreground">
-          No papers match your filters.
+          No papers with group links match your filters yet. Try another category
+          or add a link from Contribute.
         </p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">

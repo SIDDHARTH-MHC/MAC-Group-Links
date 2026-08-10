@@ -3,7 +3,7 @@ import { ReportGroupButton } from "@/components/groups/report-group-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatEligibility, PLATFORM_LABELS, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { formatEligibility, PLATFORM_LABELS, getPaperTypeLabel } from "@/lib/constants";
 import type { Group, Paper, Course, GroupEligibility } from "@prisma/client";
 
 type GroupWithRelations = Group & {
@@ -32,7 +32,7 @@ export function GroupCard({ group }: { group: GroupWithRelations }) {
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{group.sectionName}</CardTitle>
           <Badge variant="secondary" className="shrink-0">
-            {PAPER_TYPE_LABELS[group.paper.paperType].short}
+            {getPaperTypeLabel(group.paper.paperType).short}
           </Badge>
         </div>
         <p className="text-sm text-amber-900/70">{group.paper.paperName}</p>

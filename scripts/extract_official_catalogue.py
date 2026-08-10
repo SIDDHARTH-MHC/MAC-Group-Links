@@ -283,7 +283,7 @@ def parse_sem357(entries: list[PaperEntry]) -> None:
     ]:
         sec(3, "English", "125", name)
         sec(5, "English", "125", name)
-    sec(7, "English", "125", "Creative Writing", ptype="SBC")
+    sec(7, "English", "125", "Creative Writing")
 
     sec(3, "Journalism", "Media Lab", "Content Development and Media for Children")
     sec(5, "Journalism", "Media Lab", "Content Development and Media for Children")
@@ -353,7 +353,7 @@ def parse_sem357(entries: list[PaperEntry]) -> None:
     sec(5, "Physics", "113", "Practices in horoscope 1", eligibilityNotes="Eligibility : 12th with PCM/PCB")
     sec(5, "Physics", "113", "Dairy Processing", eligibilityNotes="Eligibility : 12th with PCM/PCB")
 
-    sec(7, "Physics", "113", "Document Preparation and Presentation Software", ptype="SBC")
+    sec(7, "Physics", "113", "Document Preparation and Presentation Software")
 
     sec(3, "Biology", "Biology Lab", "Mushroom Culture and Technology-1")
     sec(5, "Biology", "Biology Lab", "Mushroom Culture and Technology-1")
@@ -366,7 +366,7 @@ def parse_sem357(entries: list[PaperEntry]) -> None:
         "Your laws, Your Rights",
         "Public Opinion and Survey Research",
     ]:
-        sec(7, "Political Science", "126", name, ptype="SBC")
+        sec(7, "Political Science", "126", name)
 
     # VAC semester 3 — page 2
     vac3 = [

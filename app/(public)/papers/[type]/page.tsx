@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { getActiveSemester } from "@/lib/db/semester";
 import { listDepartments, listPublicPapers } from "@/lib/db/queries";
 import { getCourses } from "@/lib/actions/public";
-import { paperTypeFromParam, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { paperTypeFromParam, getPaperTypeLabel } from "@/lib/constants";
 import { PaperTypeBrowse } from "@/components/papers/paper-type-browse";
 
 const TYPE_BLURBS: Partial<Record<string, string>> = {
@@ -13,7 +13,6 @@ const TYPE_BLURBS: Partial<Record<string, string>> = {
   DSE: "Discipline-specific electives for your programme.",
   AEC: "Ability enhancement courses including language options.",
   CORE: "Core papers from your programme catalogue.",
-  SBC: "Skill based courses (where listed for the semester).",
 };
 
 type Props = {
@@ -40,7 +39,7 @@ export default async function PapersByTypePage({ params, searchParams }: Props) 
     getCourses(),
   ]);
 
-  const meta = PAPER_TYPE_LABELS[paperType];
+  const meta = getPaperTypeLabel(paperType);
 
   return (
     <div className="space-y-6">

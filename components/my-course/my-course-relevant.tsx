@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useCourseYearPrefs, formatPrefsLabel } from "@/lib/preferences/course-year";
-import { PAPER_TYPE_LABELS } from "@/lib/constants";
+import { getPaperTypeLabel } from "@/lib/constants";
 import type { PaperType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 
@@ -78,8 +78,7 @@ export function MyCourseRelevantGroups() {
                 className="block rounded-xl border border-border bg-card p-4 hover:border-primary/30"
               >
                 <Badge variant="secondary" className="mb-2">
-                  {PAPER_TYPE_LABELS[paper.paperType as PaperType]?.short ??
-                    paper.paperType}
+                  {getPaperTypeLabel(paper.paperType as PaperType).short}
                 </Badge>
                 <p className="font-medium text-foreground">{paper.paperName}</p>
                 <p className="text-sm text-muted-foreground">

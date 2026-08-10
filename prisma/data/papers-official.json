@@ -1036,7 +1036,7 @@
   },
   {
     "semesterNumber": 7,
-    "paperType": "SBC",
+    "paperType": "SEC",
     "paperName": "Creative Writing",
     "department": "English",
     "departmentRoom": "125",
@@ -1903,7 +1903,7 @@
   },
   {
     "semesterNumber": 7,
-    "paperType": "SBC",
+    "paperType": "SEC",
     "paperName": "Document Preparation and Presentation Software",
     "department": "Physics",
     "departmentRoom": "113",
@@ -1988,7 +1988,7 @@
   },
   {
     "semesterNumber": 7,
-    "paperType": "SBC",
+    "paperType": "SEC",
     "paperName": "Conduct of Elections in India: Voters, Candidates and Campaigns",
     "department": "Political Science",
     "departmentRoom": "126",
@@ -2005,7 +2005,7 @@
   },
   {
     "semesterNumber": 7,
-    "paperType": "SBC",
+    "paperType": "SEC",
     "paperName": "Your laws, Your Rights",
     "department": "Political Science",
     "departmentRoom": "126",
@@ -2022,7 +2022,7 @@
   },
   {
     "semesterNumber": 7,
-    "paperType": "SBC",
+    "paperType": "SEC",
     "paperName": "Public Opinion and Survey Research",
     "department": "Political Science",
     "departmentRoom": "126",

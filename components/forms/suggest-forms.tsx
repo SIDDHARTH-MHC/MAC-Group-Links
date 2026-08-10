@@ -24,7 +24,7 @@ import {
   SuggestionType,
 } from "@prisma/client";
 import type { Course } from "@prisma/client";
-import { PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
 import { MacCourseSelect } from "@/components/forms/mac-course-select";
 
 const EDIT_TYPES: { value: SuggestionType; label: string }[] = [
@@ -247,7 +247,7 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {PAPER_TYPES.map((t) => (
+            {MAC_PAPER_TYPES.map((t) => (
               <SelectItem key={t} value={t}>
                 {PAPER_TYPE_LABELS[t].short}
               </SelectItem>

@@ -56,6 +56,22 @@ export function PaperGroupsList({
     : groups;
 
   if (visible.length === 0) {
+    if (groups.length > 0) {
+      return (
+        <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
+          <p className="font-medium text-foreground">
+            No groups match your course selection.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Update{" "}
+            <Link href="/my-course" className="text-primary underline-offset-2 hover:underline">
+              My Course
+            </Link>{" "}
+            to see the right group, or clear filters above.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
         <p className="font-medium text-foreground">

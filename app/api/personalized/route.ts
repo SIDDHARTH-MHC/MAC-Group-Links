@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getActiveSemester } from "@/lib/db/semester";
 import { prisma } from "@/lib/db/prisma";
+import { publicPaperCatalogueWhere, activeGroupWithLinkWhere } from "@/lib/db/group-visibility";
 import { paperMatchesPrefs, matchesEligibility } from "@/lib/eligibility-match";
 
 export async function GET(request: Request) {
@@ -30,12 +31,16 @@ export async function GET(request: Request) {
   };
 
   const papers = await prisma.paper.findMany({
-    where: { semesterId: semester.id, archivedAt: null },
+    where: {
+      semesterId: semester.id,
+      archivedAt: null,
+      ...publicPaperCatalogueWhere,
+    },
     include: {
       department: true,
       eligibilities: true,
       groups: {
-        where: { status: "ACTIVE" },
+        where: activeGroupWithLinkWhere,
         include: { eligibilities: { include: { course: true } } },
       },
     },

@@ -10,6 +10,10 @@ import {
 } from "@/lib/validations";
 import { groupLinkFields } from "@/lib/constants";
 import { duplicateGroupLinkMessage } from "@/lib/db/departments";
+import {
+  paperHasActiveGroupLink,
+  paperHasPendingContribution,
+} from "@/lib/db/group-visibility";
 import { getAuthoritativeCourses } from "@/lib/courses/db-courses";
 import { revalidatePath } from "next/cache";
 import { SuggestionType } from "@prisma/client";
@@ -39,6 +43,21 @@ export async function submitGroupContribution(
   }
   const data = parsed.data;
   await assertPaperInActiveSemester(data.paperId);
+
+  if (await paperHasActiveGroupLink(data.paperId)) {
+    return {
+      ok: false,
+      error:
+        "This paper already has a group link. Ask admin to update or remove it first.",
+    };
+  }
+  if (await paperHasPendingContribution(data.paperId)) {
+    return {
+      ok: false,
+      error:
+        "A group link for this paper is already waiting for admin review.",
+    };
+  }
 
   const linkFields = groupLinkFields(data.groupLink);
   const dupMsg = await duplicateGroupLinkMessage(
@@ -77,6 +96,9 @@ export async function submitGroupContribution(
   });
 
   revalidatePath("/");
+  revalidatePath("/contribute/add");
+  revalidatePath("/papers");
+  revalidatePath("/search");
   revalidatePath(`/paper/${data.paperId}`);
   return {
     ok: true,

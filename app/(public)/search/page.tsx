@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MacSearchBar } from "@/components/ui/mac-search-bar";
 import { Badge } from "@/components/ui/badge";
-import { PAPER_TYPE_LABELS } from "@/lib/constants";
+import { getPaperTypeLabel, PAPER_TYPE_LABELS } from "@/lib/constants";
 import type { Paper, PaperEligibility, Course, Department } from "@prisma/client";
 
 type PaperRow = Paper & {
@@ -46,7 +46,7 @@ export default function SearchPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Search</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Papers, teachers, and departments for the active semester.
+          Papers that already have a group link this semester.
         </p>
       </div>
       <MacSearchBar
@@ -67,7 +67,9 @@ export default function SearchPage() {
         </ul>
       )}
       {!pending && q.trim() && results.length === 0 && (
-        <p className="text-muted-foreground">No matching papers found.</p>
+        <p className="text-muted-foreground">
+          No papers with group links match your search.
+        </p>
       )}
       {!pending && (
         <ul className="space-y-3">
@@ -80,7 +82,7 @@ export default function SearchPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <Badge variant="secondary" className="mb-2">
-                      {PAPER_TYPE_LABELS[paper.paperType].short}
+                      {getPaperTypeLabel(paper.paperType).short}
                     </Badge>
                     <p className="font-semibold text-foreground">
                       {paper.paperName}

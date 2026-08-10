@@ -12,6 +12,7 @@ import {
 } from "@/lib/validations";
 import { normalizeGroupLink, groupLinkFields } from "@/lib/constants";
 import { findDepartmentByName, duplicateGroupLinkMessage } from "@/lib/db/departments";
+import { paperHasActiveGroupLink } from "@/lib/db/group-visibility";
 import {
   importCatalogueRows,
   loadCoursesByName,
@@ -26,6 +27,14 @@ import { redirect } from "next/navigation";
 export type ActionResult =
   | { ok: true; message?: string; id?: string }
   | { ok: false; error: string };
+
+function revalidatePublicCatalogue(paperId?: string) {
+  revalidatePath("/");
+  revalidatePath("/contribute/add");
+  revalidatePath("/papers");
+  revalidatePath("/search");
+  if (paperId) revalidatePath(`/paper/${paperId}`);
+}
 
 export async function adminLogin(input: unknown) {
   const parsed = adminLoginSchema.safeParse(input);
@@ -321,6 +330,13 @@ export async function createGroup(input: unknown): Promise<ActionResult> {
       linkFields.normalizedGroupLink
     );
     if (dupMsg) return { ok: false, error: dupMsg };
+    if (await paperHasActiveGroupLink(d.paperId)) {
+      return {
+        ok: false,
+        error:
+          "This paper already has a group link. Edit or delete the existing group.",
+      };
+    }
   }
 
   const group = await prisma.group.create({
@@ -341,7 +357,7 @@ export async function createGroup(input: unknown): Promise<ActionResult> {
     },
   });
   await logAdminAction("GROUP_CREATED", group.sectionName, "Group", group.id);
-  revalidatePath(`/paper/${d.paperId}`);
+  revalidatePublicCatalogue(d.paperId);
   return { ok: true, id: group.id };
 }
 
@@ -386,7 +402,7 @@ export async function updateGroup(
     });
   });
   await logAdminAction("GROUP_UPDATED", d.sectionName, "Group", groupId);
-  revalidatePath(`/paper/${d.paperId}`);
+  revalidatePublicCatalogue(d.paperId);
   return { ok: true };
 }
 
@@ -396,7 +412,7 @@ export async function deleteGroup(groupId: string): Promise<ActionResult> {
   if (!g) return { ok: false, error: "Not found" };
   await prisma.group.delete({ where: { id: groupId } });
   await logAdminAction("GROUP_DELETED", g.sectionName, "Group", groupId);
-  revalidatePath(`/paper/${g.paperId}`);
+  revalidatePublicCatalogue(g.paperId);
   return { ok: true };
 }
 
@@ -410,6 +426,11 @@ export async function markGroupExpired(
     data: { status: expired ? "EXPIRED" : "ACTIVE" },
   });
   revalidatePath("/admin/groups");
+  const g = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { paperId: true },
+  });
+  if (g) revalidatePublicCatalogue(g.paperId);
   return { ok: true };
 }
 
@@ -437,6 +458,13 @@ export async function approveContribution(
   const normalized = c.normalizedGroupLink || normalizeGroupLink(c.groupLink);
   const dupMsg = await duplicateGroupLinkMessage(c.paperId, normalized);
   if (dupMsg) return { ok: false, error: dupMsg };
+
+  if (await paperHasActiveGroupLink(c.paperId)) {
+    return {
+      ok: false,
+      error: "This paper already has a group link. Edit or delete it in admin first.",
+    };
+  }
 
   await prisma.$transaction(async (tx) => {
     const group = await tx.group.create({
@@ -473,8 +501,7 @@ export async function approveContribution(
   });
 
   revalidatePath("/admin/contributions");
-  revalidatePath(`/paper/${c.paperId}`);
-  revalidatePath("/");
+  revalidatePublicCatalogue(c.paperId);
   return { ok: true };
 }
 

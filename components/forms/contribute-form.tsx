@@ -18,7 +18,7 @@ import {
   MacCourseSelect,
   MacCourseYearRow,
 } from "@/components/forms/mac-course-select";
-import { PAPER_TYPE_LABELS, PAPER_TYPES } from "@/lib/constants";
+import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES } from "@/lib/constants";
 import { ContributorType, GroupPlatform, type PaperType } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
@@ -153,7 +153,7 @@ export function ContributeForm({
   }
 
   return (
-    <div className="mx-auto max-w-[640px] space-y-6 rounded-xl border border-border bg-card p-5">
+    <div className="mx-auto max-w-[640px] space-y-6 overflow-visible rounded-xl border border-border bg-card p-5">
       <div className="space-y-1.5">
         <Label htmlFor="paper-type">Paper type</Label>
         <Select
@@ -166,10 +166,10 @@ export function ContributeForm({
           }}
         >
           <SelectTrigger id="paper-type" className="h-11 w-full">
-            <SelectValue placeholder="Choose SEC, VAC, GE, DSE, AEC, Core, or SBC" />
+            <SelectValue placeholder="Choose SEC, VAC, GE, DSE, AEC, or Core" />
           </SelectTrigger>
           <SelectContent>
-            {PAPER_TYPES.map((type) => {
+            {MAC_PAPER_TYPES.map((type) => {
               const meta = PAPER_TYPE_LABELS[type];
               const count = papers.filter((p) => p.paperType === type).length;
               return (

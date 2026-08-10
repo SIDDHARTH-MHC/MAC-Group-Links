@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getActiveSemester } from "@/lib/db/semester";
 import { getPublicPaper } from "@/lib/db/queries";
 import {
-  PAPER_TYPE_LABELS,
+  getPaperTypeLabel,
   formatEligibility,
   YEAR_LABELS,
 } from "@/lib/constants";
@@ -69,7 +69,7 @@ export default async function PaperDetailPage({ params }: Props) {
   return (
     <div className="space-y-10">
       <div className="space-y-4">
-        <Badge variant="secondary">{PAPER_TYPE_LABELS[paper.paperType].short}</Badge>
+        <Badge variant="secondary">{getPaperTypeLabel(paper.paperType).short}</Badge>
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           {paper.paperName}
         </h1>
@@ -121,11 +121,6 @@ export default async function PaperDetailPage({ params }: Props) {
           </p>
         ) : null}
         <div className="flex flex-wrap gap-2 pt-2">
-          <Button asChild size="lg">
-            <Link href={`/contribute/add?paperId=${paper.id}`}>
-              + Add Group Link
-            </Link>
-          </Button>
           <Button asChild variant="outline">
             <Link href={`/suggest?paperId=${paper.id}`}>Suggest an edit</Link>
           </Button>

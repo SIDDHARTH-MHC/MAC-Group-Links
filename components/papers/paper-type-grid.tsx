@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { PAPER_TYPE_LABELS, PAPER_TYPES } from "@/lib/constants";
+import { PAPER_TYPE_LABELS, MAC_PAPER_TYPES, getPaperTypeLabel } from "@/lib/constants";
 
 export function PaperTypeGrid() {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-      {PAPER_TYPES.map((type) => {
+      {MAC_PAPER_TYPES.map((type) => {
         const meta = PAPER_TYPE_LABELS[type];
         return (
           <Link

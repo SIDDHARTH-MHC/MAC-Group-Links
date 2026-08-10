@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS, getPaperTypeLabel } from "@/lib/constants";
 import type { Department, Paper, PaperType, Semester } from "@prisma/client";
 
 export function PaperAdminClient({
@@ -90,7 +90,7 @@ export function PaperAdminClient({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All types</SelectItem>
-            {PAPER_TYPES.map((t) => (
+            {MAC_PAPER_TYPES.map((t) => (
               <SelectItem key={t} value={t}>
                 {t}
               </SelectItem>
@@ -289,9 +289,9 @@ function NewPaperForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {PAPER_TYPES.map((t) => (
+            {MAC_PAPER_TYPES.map((t) => (
               <SelectItem key={t} value={t}>
-                {PAPER_TYPE_LABELS[t].title}
+                {getPaperTypeLabel(t).title}
               </SelectItem>
             ))}
           </SelectContent>

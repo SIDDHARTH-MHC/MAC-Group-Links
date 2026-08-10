@@ -13,9 +13,9 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
 
 function PopoverContent({
   className,
-  align = "center",
+  align = "start",
   side = "bottom",
-  sideOffset = 4,
+  sideOffset = 8,
   alignOffset = 0,
   ...props
 }: PopoverPrimitive.Popup.Props &
@@ -30,12 +30,12 @@ function PopoverContent({
         sideOffset={sideOffset}
         align={align}
         alignOffset={alignOffset}
-        className="isolate z-[100]"
+        className="isolate z-[300]"
       >
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            "relative z-[100] w-(--anchor-width) min-w-[var(--anchor-width,16rem)] origin-(--transform-origin) rounded-lg border border-border bg-popover p-0 text-popover-foreground shadow-md outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "relative z-[300] w-(--anchor-width) min-w-[var(--anchor-width,16rem)] origin-(--transform-origin) rounded-lg border border-border bg-popover p-0 text-popover-foreground shadow-lg outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className,
           )}
           {...props}

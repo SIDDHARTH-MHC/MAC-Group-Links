@@ -8,7 +8,7 @@ export default function PapersHubPage() {
           Browse papers
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Choose a paper type to see the catalogue and group links for this
+          Choose a paper type to see papers that already have a group link this
           semester.
         </p>
       </div>
