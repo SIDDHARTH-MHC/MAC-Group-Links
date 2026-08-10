@@ -18,7 +18,7 @@ cp .env.example .env.local
 npm install
 npx prisma generate
 npm run db:migrate:dev   # or: npm run db:migrate in production
-npm run db:seed          # development sample catalogue + sample groups
+npm run db:seed          # reset DB from repo files (official catalogue; no demo groups)
 npm run dev
 ```
 
@@ -61,7 +61,7 @@ npm run db:seed-courses
 - Login: `/admin/login`
 - After login: dashboard, semesters, papers, contributions, suggestions, reports, audit log
 - **New semester** starts with an **empty** paper catalogue; add papers manually or import JSON from **Admin → Papers**
-- Sample seed group links use `https://example.com/sample-mac-group-do-not-use-*` — not real groups
+- Group links start empty; students contribute links via the public site
 
 ## Scripts
 
@@ -73,7 +73,7 @@ npm run db:seed-courses
 | `npm run lint` | ESLint |
 | `npm run db:migrate:dev` | Create/apply migrations (dev) |
 | `npm run db:migrate` | Apply migrations (production) |
-| `npm run db:seed` | Load dev courses, semester, papers, sample groups |
+| `npm run db:seed` | Load departments, courses, active semester, and official papers from `prisma/data/` (no sample groups) |
 
 ## Official catalogue (PDF → JSON)
 

@@ -22,10 +22,10 @@ export const eligibilityRowSchema = z.object({
 });
 
 export const importEligibilitySchema = z.object({
-  course: z.string().min(1).optional(),
-  year: z.coerce.number().int().min(1).max(4).optional(),
+  course: z.string().min(1).optional().nullable(),
+  year: z.coerce.number().int().min(1).max(4).optional().nullable(),
   combination: z.string().max(200).optional().nullable(),
-  notes: z.string().max(500).optional(),
+  notes: z.string().max(500).optional().nullable(),
   appliesToAll: z.boolean().optional(),
 });
 
@@ -120,14 +120,14 @@ export const paperImportRowSchema = z.object({
   paperName: z.string().min(2),
   department: z.string().min(1),
   departmentRoom: z.string().optional().nullable(),
-  paperCode: z.string().optional(),
+  paperCode: z.string().optional().nullable(),
   dseNumber: z.string().optional().nullable(),
   seatCapacity: z.coerce.number().int().positive().optional().nullable(),
   prerequisite: z.string().optional().nullable(),
   sourceDocument: z.string().optional().nullable(),
   sourcePage: z.coerce.number().int().optional().nullable(),
   sourceText: z.string().optional().nullable(),
-  sourceDocumentUrl: z.string().optional(),
+  sourceDocumentUrl: z.string().optional().nullable(),
   eligibilityNotes: z.string().max(2000).optional().nullable(),
   eligibilities: z.array(importEligibilitySchema).default([]),
 });
