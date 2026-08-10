@@ -22,6 +22,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { formatEligibility } from "@/lib/constants";
+import { MAC_YEARS } from "@/lib/constants/courses";
 import { paperMatchesPrefs } from "@/lib/eligibility-match";
 import type { Course, Department, Paper, PaperEligibility } from "@prisma/client";
 
@@ -90,7 +91,7 @@ export function PaperTypeBrowse({
           value={dept || "all"}
           onValueChange={(v) => pushFilters({ dept: !v || v === "all" ? "" : v })}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="All departments" />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +110,7 @@ export function PaperTypeBrowse({
           value={courseId || "all"}
           onValueChange={(v) => setCourseId(!v || v === "all" ? "" : v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Any course" />
           </SelectTrigger>
           <SelectContent>
@@ -128,14 +129,16 @@ export function PaperTypeBrowse({
           value={year || "all"}
           onValueChange={(v) => setYear(!v || v === "all" ? "" : v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Any year" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any year</SelectItem>
-            <SelectItem value="1">1st Year</SelectItem>
-            <SelectItem value="2">2nd Year</SelectItem>
-            <SelectItem value="3">3rd Year</SelectItem>
+            {MAC_YEARS.map((y) => (
+              <SelectItem key={y.value} value={String(y.value)}>
+                {y.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

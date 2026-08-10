@@ -1,9 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MAC_YEARS } from "@/lib/constants/courses";
 import {
   createGroup,
   deleteGroup,
@@ -26,6 +35,8 @@ export function AdminGroupsPanel({
   courses: Course[];
 }) {
   const router = useRouter();
+  const [courseId, setCourseId] = useState("");
+  const [year, setYear] = useState("2");
 
   return (
     <div className="space-y-6">
@@ -41,8 +52,6 @@ export function AdminGroupsPanel({
         onSubmit={async (e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          const courseId = String(fd.get("courseId") || "");
-          const year = Number(fd.get("year") || 0);
           await createGroup({
             paperId: paper.id,
             sectionName: String(fd.get("sectionName")),
@@ -51,14 +60,14 @@ export function AdminGroupsPanel({
             groupLink: String(fd.get("groupLink") || "") || undefined,
             groupPlatform: "WHATSAPP",
             eligibilities: courseId
-              ? [{ courseId, year: year || undefined }]
+              ? [{ courseId, year: Number(year) || undefined }]
               : [{ appliesToAll: true }],
           });
           router.refresh();
         }}
       >
         <h2 className="font-semibold">Add group</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid max-w-xl gap-3">
           <div className="space-y-2">
             <Label>Section</Label>
             <Input name="sectionName" defaultValue="Group A" required />
@@ -77,22 +86,37 @@ export function AdminGroupsPanel({
           </div>
           <div className="space-y-2">
             <Label>Course</Label>
-            <select name="courseId" className="h-11 w-full rounded-xl border px-3">
-              <option value="">All students</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={courseId || "all"}
+              onValueChange={(v) => setCourseId(!v || v === "all" ? "" : v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All students" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All students</SelectItem>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Year</Label>
-            <select name="year" className="h-11 w-full rounded-xl border px-3" defaultValue="2">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
+            <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MAC_YEARS.map((y) => (
+                  <SelectItem key={y.value} value={String(y.value)}>
+                    {y.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <Button type="submit">Save group</Button>
@@ -120,7 +144,6 @@ export function AdminGroupsPanel({
                 size="sm"
                 variant="destructive"
                 onClick={async () => {
-                  if (!confirm("Delete this group?")) return;
                   await deleteGroup(group.id);
                   router.refresh();
                 }}

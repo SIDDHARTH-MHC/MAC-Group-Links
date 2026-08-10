@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { CoursePrefsCard } from "@/components/layout/course-prefs-card";
 
@@ -17,6 +18,7 @@ export default function PublicLayout({
           <CoursePrefsCard />
         </div>
         {children}
+        <SiteFooter />
       </main>
       <MobileNav />
     </>

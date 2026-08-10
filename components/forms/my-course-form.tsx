@@ -2,36 +2,20 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   useCourseYearPrefs,
-  isBaProgrammeCourseName,
 } from "@/lib/preferences/course-year";
 import { formatCombinationLabel } from "@/lib/courses/mac";
+import { YEAR_LABELS } from "@/lib/constants";
+import { MacCourseSelect } from "@/components/forms/mac-course-select";
 import type { Course } from "@prisma/client";
 
-export function MyCourseForm({
-  courses,
-  baCombinations,
-}: {
-  courses: Course[];
-  baCombinations: string[];
-}) {
+export function MyCourseForm({ courses }: { courses: Course[] }) {
   const { prefs, setPrefs, loaded } = useCourseYearPrefs();
   const [courseId, setCourseId] = useState(prefs?.courseId ?? "");
   const [year, setYear] = useState(prefs ? String(prefs.year) : "2");
   const [combination, setCombination] = useState(prefs?.combination ?? "");
   const [editing, setEditing] = useState(false);
-
-  const selectedCourse = courses.find((c) => c.id === courseId);
-  const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
   if (!loaded) {
     return (
@@ -41,7 +25,7 @@ export function MyCourseForm({
 
   if (prefs && !editing) {
     return (
-      <div className="rounded-xl border border-border bg-card p-5">
+      <div className="mx-auto max-w-[640px] rounded-xl border border-border bg-card p-5">
         <p className="text-sm text-muted-foreground">You are currently viewing:</p>
         <p className="mt-2 text-lg font-semibold text-foreground">
           {prefs.courseName}
@@ -52,11 +36,7 @@ export function MyCourseForm({
           </p>
         ) : null}
         <p className="font-medium text-foreground">
-          {prefs.year === 1
-            ? "1st Year"
-            : prefs.year === 2
-              ? "2nd Year"
-              : "3rd Year"}
+          {YEAR_LABELS[prefs.year] ?? `Year ${prefs.year}`}
         </p>
         <Button
           variant="outline"
@@ -76,7 +56,7 @@ export function MyCourseForm({
 
   if (!prefs && !editing) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
+      <div className="mx-auto max-w-[640px] rounded-xl border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
         <p className="text-muted-foreground">
           Select your course and year to get personalized results.
         </p>
@@ -88,61 +68,19 @@ export function MyCourseForm({
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4 rounded-xl border border-border bg-card p-5">
-      <div>
-        <Label htmlFor="course-select">Course</Label>
-        <Select
-          value={courseId}
-          onValueChange={(v) => {
-            setCourseId(v ?? "");
-            setCombination("");
-          }}
-        >
-          <SelectTrigger id="course-select" className="mt-1.5">
-            <SelectValue placeholder="Select course" />
-          </SelectTrigger>
-          <SelectContent>
-            {courses.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {showCombination && (
-        <div>
-          <Label htmlFor="combo-select">Combination (B.A. Programme)</Label>
-          <Select
-            value={combination}
-            onValueChange={(v) => setCombination(v ?? "")}
-          >
-            <SelectTrigger id="combo-select" className="mt-1.5">
-              <SelectValue placeholder="Select combination" />
-            </SelectTrigger>
-            <SelectContent>
-              {baCombinations.map((combo) => (
-                <SelectItem key={combo} value={combo}>
-                  {formatCombinationLabel(combo)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      <div>
-        <Label htmlFor="year-select">Year</Label>
-        <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
-          <SelectTrigger id="year-select" className="mt-1.5">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1st Year</SelectItem>
-            <SelectItem value="2">2nd Year</SelectItem>
-            <SelectItem value="3">3rd Year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="mx-auto max-w-[640px] space-y-4 rounded-xl border border-border bg-card p-5">
+      <MacCourseSelect
+        courses={courses}
+        courseId={courseId}
+        onCourseIdChange={setCourseId}
+        year={year}
+        onYearChange={setYear}
+        combination={combination}
+        onCombinationChange={setCombination}
+        courseSelectId="course-select"
+        yearSelectId="year-select"
+        comboSelectId="combo-select"
+      />
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           className="flex-1"
@@ -150,11 +88,13 @@ export function MyCourseForm({
           onClick={() => {
             const course = courses.find((c) => c.id === courseId);
             if (!course) return;
+            const needsCombo = course.name === "B.A. Programme";
             setPrefs({
               courseId,
               courseName: course.name,
               year: Number(year),
-              combination: showCombination && combination ? combination : null,
+              combination:
+                needsCombo && combination ? combination : null,
             });
             setEditing(false);
           }}

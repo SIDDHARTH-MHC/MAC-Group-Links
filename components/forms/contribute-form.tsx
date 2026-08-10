@@ -13,20 +13,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { submitGroupContribution } from "@/lib/actions/public";
-import { formatCombinationLabel } from "@/lib/courses/mac";
-import { isBaProgrammeCourseName } from "@/lib/preferences/course-year";
+import { PaperCombobox } from "@/components/forms/paper-combobox";
+import {
+  MacCourseSelect,
+  MacCourseYearRow,
+} from "@/components/forms/mac-course-select";
 import { ContributorType, GroupPlatform } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
 export function ContributeForm({
   papers,
   courses,
-  baCombinations,
   initialPaperId,
 }: {
   papers: { id: string; paperName: string; paperType: string }[];
   courses: Course[];
-  baCombinations: string[];
   initialPaperId?: string;
 }) {
   const searchParams = useSearchParams();
@@ -45,9 +46,6 @@ export function ContributeForm({
   const [platform, setPlatform] = useState<GroupPlatform>("WHATSAPP");
   const [teacherName, setTeacherName] = useState("");
   const [actualClassRoom, setActualClassRoom] = useState("");
-  const [days, setDays] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [sectionName, setSectionName] = useState("");
   const [contributorName, setContributorName] = useState("");
   const [contributorType, setContributorType] = useState<ContributorType>(
@@ -75,9 +73,6 @@ export function ContributeForm({
       /* ignore */
     }
   }
-
-  const selectedCourse = courses.find((c) => c.id === courseId);
-  const showCombination = isBaProgrammeCourseName(selectedCourse?.name);
 
   function submit() {
     if (!paperId) {
@@ -115,9 +110,6 @@ export function ContributeForm({
         sectionName: sectionName || undefined,
         teacherName: teacherName || undefined,
         actualClassRoom: actualClassRoom || undefined,
-        days: days || undefined,
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
         groupPlatform: platform,
         groupLink,
         contributorName: contributorName || undefined,
@@ -133,24 +125,18 @@ export function ContributeForm({
   }
 
   return (
-    <div className="space-y-6 rounded-xl border border-border bg-card p-5">
-      <div>
-        <Label>Paper</Label>
-        <Select value={paperId} onValueChange={(v) => setPaperId(v ?? "")}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select paper" />
-          </SelectTrigger>
-          <SelectContent>
-            {papers.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                [{p.paperType}] {p.paperName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="mx-auto max-w-[640px] space-y-6 rounded-xl border border-border bg-card p-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="paper-combobox">Paper</Label>
+        <PaperCombobox
+          id="paper-combobox"
+          papers={papers}
+          value={paperId}
+          onValueChange={setPaperId}
+        />
       </div>
 
-      <div>
+      <div className="space-y-1.5">
         <Label>Who is this group for?</Label>
         <Select
           value={appliesMode}
@@ -160,7 +146,7 @@ export function ContributeForm({
             if (mode === "mine") applyMinePrefs();
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -179,97 +165,38 @@ export function ContributeForm({
       ) : null}
 
       {(appliesMode === "select" || appliesMode === "mine") && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <Label>Course</Label>
-            <Select value={courseId} onValueChange={(v) => setCourseId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Course" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Year</Label>
-            <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1st Year</SelectItem>
-                <SelectItem value="2">2nd Year</SelectItem>
-                <SelectItem value="3">3rd Year</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-
-      {showCombination && (appliesMode === "select" || appliesMode === "mine") && (
-        <div>
-          <Label>Combination (optional)</Label>
-          <Select value={combination} onValueChange={(v) => setCombination(v ?? "")}>
-            <SelectTrigger>
-              <SelectValue placeholder="B.A. Programme combination" />
-            </SelectTrigger>
-            <SelectContent>
-              {baCombinations.map((combo) => (
-                <SelectItem key={combo} value={combo}>
-                  {formatCombinationLabel(combo)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <MacCourseSelect
+          courses={courses}
+          courseId={courseId}
+          onCourseIdChange={setCourseId}
+          year={year}
+          onYearChange={setYear}
+          combination={combination}
+          onCombinationChange={setCombination}
+          combinationLabel="Combination"
+          combinationOptional
+        />
       )}
 
       {appliesMode === "multiple" && (
         <div className="space-y-3">
           {extraEligibilities.map((row, idx) => (
-            <div key={idx} className="grid gap-2 sm:grid-cols-2">
-              <Select
-                value={row.courseId}
-                onValueChange={(v) => {
-                  const next = [...extraEligibilities];
-                  next[idx] = { ...next[idx], courseId: v ?? "" };
-                  setExtraEligibilities(next);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Course" />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={row.year}
-                onValueChange={(v) => {
-                  const next = [...extraEligibilities];
-                  next[idx] = { ...next[idx], year: v ?? "2" };
-                  setExtraEligibilities(next);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1st Year</SelectItem>
-                  <SelectItem value="2">2nd Year</SelectItem>
-                  <SelectItem value="3">3rd Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <MacCourseYearRow
+              key={idx}
+              courses={courses}
+              courseId={row.courseId}
+              onCourseIdChange={(v) => {
+                const next = [...extraEligibilities];
+                next[idx] = { ...next[idx], courseId: v };
+                setExtraEligibilities(next);
+              }}
+              year={row.year}
+              onYearChange={(v) => {
+                const next = [...extraEligibilities];
+                next[idx] = { ...next[idx], year: v };
+                setExtraEligibilities(next);
+              }}
+            />
           ))}
           <Button
             type="button"
@@ -287,43 +214,29 @@ export function ContributeForm({
         </div>
       )}
 
-      <div>
+      <div className="space-y-1.5">
         <Label>Section (optional)</Label>
         <Input value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
       </div>
-      <div>
+      <div className="space-y-1.5">
         <Label>Teacher (optional)</Label>
         <Input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} />
       </div>
-      <div>
+      <div className="space-y-1.5">
         <Label>Actual Class Room (optional)</Label>
         <Input
           value={actualClassRoom}
           onChange={(e) => setActualClassRoom(e.target.value)}
         />
       </div>
-      <div>
-        <Label>Days (optional)</Label>
-        <Input value={days} onChange={(e) => setDays(e.target.value)} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label>Start time (optional)</Label>
-          <Input value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        </div>
-        <div>
-          <Label>End time (optional)</Label>
-          <Input value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-        </div>
-      </div>
 
-      <div>
+      <div className="space-y-1.5">
         <Label>Platform</Label>
         <Select
           value={platform}
           onValueChange={(v) => setPlatform(v as GroupPlatform)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -334,7 +247,7 @@ export function ContributeForm({
         </Select>
       </div>
 
-      <div>
+      <div className="space-y-1.5">
         <Label>Group link</Label>
         <Input
           value={groupLink}
@@ -343,20 +256,20 @@ export function ContributeForm({
         />
       </div>
 
-      <div>
+      <div className="space-y-1.5">
         <Label>Your name (optional)</Label>
         <Input
           value={contributorName}
           onChange={(e) => setContributorName(e.target.value)}
         />
       </div>
-      <div>
+      <div className="space-y-1.5">
         <Label>You are</Label>
         <Select
           value={contributorType}
           onValueChange={(v) => setContributorType(v as ContributorType)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

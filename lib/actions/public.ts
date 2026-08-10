@@ -10,7 +10,7 @@ import {
 } from "@/lib/validations";
 import { groupLinkFields } from "@/lib/constants";
 import { duplicateGroupLinkMessage } from "@/lib/db/departments";
-import { MAC_COURSES } from "@/lib/courses/mac";
+import { getAuthoritativeCourses } from "@/lib/courses/db-courses";
 import { revalidatePath } from "next/cache";
 import { SuggestionType } from "@prisma/client";
 
@@ -173,12 +173,7 @@ export async function submitGroupReport(input: unknown): Promise<ActionResult> {
   return { ok: true, message: "Report submitted. Thank you." };
 }
 
+/** DB course rows for the authoritative MAC list only (dropdowns). */
 export async function getCourses() {
-  const rows = await prisma.course.findMany({
-    where: { active: true },
-  });
-  const order = MAC_COURSES.map((c) => c.name);
-  return rows.sort(
-    (a, b) => order.indexOf(a.name) - order.indexOf(b.name) || a.name.localeCompare(b.name),
-  );
+  return getAuthoritativeCourses();
 }

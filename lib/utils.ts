@@ -11,6 +11,7 @@ export function formatYearLabel(year: number): string {
     1: "1st Year",
     2: "2nd Year",
     3: "3rd Year",
+    4: "4th Year",
   };
   return labels[year] ?? `${year}th Year`;
 }

@@ -1,15 +1,22 @@
-import coursesData from "@/prisma/data/courses.json";
+import {
+  BA_PROGRAMME_COURSE_NAME,
+  BA_PROGRAMME_COMBINATIONS,
+  MAC_COURSES,
+  MAC_COURSE_NAMES,
+  MAC_YEARS,
+  LEGACY_COURSE_NAME_ALIASES,
+  type MacCourse,
+} from "@/lib/constants/courses";
 
-export const BA_PROGRAMME_COURSE_NAME = "B.A. Programme";
-
-export const MAC_COURSES = coursesData.courses as {
-  name: string;
-  shortName: string;
-}[];
-
-/** Canonical combination strings (OMSP = Commerce stream at MAC). */
-export const BA_PROGRAMME_COMBINATIONS =
-  coursesData.baProgrammeCombinations as string[];
+export {
+  BA_PROGRAMME_COURSE_NAME,
+  BA_PROGRAMME_COMBINATIONS,
+  MAC_COURSES,
+  MAC_COURSE_NAMES,
+  MAC_YEARS,
+  LEGACY_COURSE_NAME_ALIASES,
+  type MacCourse,
+};
 
 export function isBaProgrammeCourseName(name: string | null | undefined): boolean {
   if (!name) return false;
@@ -63,10 +70,11 @@ export function resolveMacCourseName(raw: string): string | null {
     "hindi (hons.)": "Hindi (Hons.)",
     "hindi(hons)": "Hindi (Hons.)",
     "hindi (hons)": "Hindi (Hons.)",
-    bbe: "B.B.E. — Bachelor of Business Economics",
-    "b.b.e.": "B.B.E. — Bachelor of Business Economics",
-    "b.a.(hons.) business economics": "B.B.E. — Bachelor of Business Economics",
-    "b.a. (hons) business economics": "B.B.E. — Bachelor of Business Economics",
+    bbe: "BBE",
+    "b.b.e.": "BBE",
+    "b.b.e. — bachelor of business economics": "BBE",
+    "b.a.(hons.) business economics": "BBE",
+    "b.a. (hons) business economics": "BBE",
     "journalism (hons.)": "Journalism (Hons.)",
     "journ(h)": "Journalism (Hons.)",
     "political science (hons.)": "Political Science (Hons.)",

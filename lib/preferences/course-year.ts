@@ -5,6 +5,7 @@ import {
   formatCombinationLabel,
   isBaProgrammeCourseName,
 } from "@/lib/courses/mac";
+import { YEAR_LABELS } from "@/lib/constants";
 import {
   matchesEligibility as matchEligibility,
   type EligibilityPrefs,
@@ -68,8 +69,7 @@ export function matchesEligibility(
 }
 
 export function formatPrefsLabel(prefs: CourseYearPrefs): string {
-  const yearLabel =
-    prefs.year === 1 ? "1st Year" : prefs.year === 2 ? "2nd Year" : "3rd Year";
+  const yearLabel = YEAR_LABELS[prefs.year] ?? `Year ${prefs.year}`;
   let label = `${prefs.courseName} — ${yearLabel}`;
   if (prefs.combination?.trim()) {
     label += ` (${formatCombinationLabel(prefs.combination)})`;

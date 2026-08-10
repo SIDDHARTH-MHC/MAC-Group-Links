@@ -25,6 +25,7 @@ import {
 } from "@prisma/client";
 import type { Course } from "@prisma/client";
 import { PAPER_TYPES, PAPER_TYPE_LABELS } from "@/lib/constants";
+import { MacCourseSelect } from "@/components/forms/mac-course-select";
 
 const EDIT_TYPES: { value: SuggestionType; label: string }[] = [
   { value: "PAPER_NAME_WRONG", label: "Paper information is wrong" },
@@ -272,36 +273,16 @@ function NewPaperSuggestionForm({ courses }: { courses: Course[] }) {
           onChange={(e) => setSuggestedDepartmentRoom(e.target.value)}
         />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <Label>Course</Label>
-          <Select value={courseId} onValueChange={(v) => setCourseId(v ?? "")}>
-            <SelectTrigger>
-              <SelectValue placeholder="Course" />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Year</Label>
-          <Select value={year} onValueChange={(v) => setYear(v ?? "2")}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1st</SelectItem>
-              <SelectItem value="2">2nd</SelectItem>
-              <SelectItem value="3">3rd</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <MacCourseSelect
+        courses={courses}
+        courseId={courseId}
+        onCourseIdChange={setCourseId}
+        year={year}
+        onYearChange={setYear}
+        hideCombination
+        courseLabel="Course (eligibility)"
+        yearLabel="Year"
+      />
       <div>
         <Label>Notes</Label>
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />

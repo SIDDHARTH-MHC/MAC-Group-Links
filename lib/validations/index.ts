@@ -15,7 +15,7 @@ export const groupLinkSchema = z
 
 export const eligibilityRowSchema = z.object({
   courseId: z.string().optional(),
-  year: z.coerce.number().int().min(1).max(3).optional(),
+  year: z.coerce.number().int().min(1).max(4).optional(),
   combination: z.string().max(200).optional().nullable(),
   notes: z.string().max(500).optional(),
   appliesToAll: z.boolean().optional(),
@@ -23,7 +23,7 @@ export const eligibilityRowSchema = z.object({
 
 export const importEligibilitySchema = z.object({
   course: z.string().min(1).optional(),
-  year: z.coerce.number().int().min(1).max(3).optional(),
+  year: z.coerce.number().int().min(1).max(4).optional(),
   combination: z.string().max(200).optional().nullable(),
   notes: z.string().max(500).optional(),
   appliesToAll: z.boolean().optional(),

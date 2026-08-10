@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getActiveSemester } from "@/lib/db/semester";
 import { prisma } from "@/lib/db/prisma";
 import { getCourses } from "@/lib/actions/public";
-import { BA_PROGRAMME_COMBINATIONS } from "@/lib/courses/mac";
 import { ContributeForm } from "@/components/forms/contribute-form";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +24,7 @@ export default async function ContributeAddPage({ searchParams }: Props) {
     : null;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-[640px] space-y-6">
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href="/contribute">← Back</Link>
@@ -56,7 +55,6 @@ export default async function ContributeAddPage({ searchParams }: Props) {
           <ContributeForm
             papers={papers}
             courses={courses}
-            baCombinations={BA_PROGRAMME_COMBINATIONS}
             initialPaperId={sp.paperId}
           />
         </Suspense>

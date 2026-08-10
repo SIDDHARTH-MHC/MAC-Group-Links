@@ -1,4 +1,3 @@
-import { BA_PROGRAMME_COMBINATIONS } from "@/lib/courses/mac";
 import { getCourses } from "@/lib/actions/public";
 import { MyCourseForm } from "@/components/forms/my-course-form";
 import { MyCourseRelevantGroups } from "@/components/my-course/my-course-relevant";
@@ -15,10 +14,7 @@ export default async function MyCoursePage() {
           Optional preference saved on this device — no account needed.
         </p>
       </div>
-      <MyCourseForm
-        courses={courses}
-        baCombinations={BA_PROGRAMME_COMBINATIONS}
-      />
+      <MyCourseForm courses={courses} />
       <MyCourseRelevantGroups />
     </div>
   );

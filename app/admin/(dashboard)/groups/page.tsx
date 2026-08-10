@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminGroupsPanel } from "@/components/admin/groups-panel";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthoritativeCourses } from "@/lib/courses/db-courses";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function AdminGroupsPage({
         groups: { include: { eligibilities: { include: { course: true } } } },
       },
     }),
-    prisma.course.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    getAuthoritativeCourses(),
   ]);
   if (!paper) notFound();
 
