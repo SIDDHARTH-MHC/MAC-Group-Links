@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { importOfficialCatalogue } from "@/lib/actions/admin";
+import { importOfficialCatalogue, importOfficialCatalogueAllOdd } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -52,6 +52,12 @@ export function OfficialCatalogueImportClient({
       (includeReview || !r.needsReview),
   );
 
+  const allOddRows = preview.rows.filter(
+    (r) =>
+      [1, 3, 5, 7].includes(r.semesterNumber) &&
+      (includeReview || !r.needsReview),
+  );
+
   return (
     <div className="space-y-6">
       <Link href="/admin/papers" className="text-sm text-slate-600 underline">
@@ -62,7 +68,8 @@ export function OfficialCatalogueImportClient({
         <code className="text-xs">prisma/data/reference/</code> → extracted to{" "}
         <code className="text-xs">papers-official.json</code>. Re-run{" "}
         <code className="text-xs">npm run catalogue:extract</code> after PDF
-        updates. No groups are created.
+        updates. Existing papers (including those with group links) are never
+        changed — only missing papers are added.
       </p>
 
       <div className="flex flex-wrap gap-4 rounded-lg border bg-white p-4">
@@ -107,7 +114,7 @@ export function OfficialCatalogueImportClient({
           />
           Include rows flagged needsReview
         </label>
-        <div className="flex items-end">
+        <div className="flex flex-wrap items-end gap-2">
           <Button
             disabled={pending || rows.length === 0}
             onClick={() =>
@@ -122,6 +129,21 @@ export function OfficialCatalogueImportClient({
             }
           >
             Confirm import ({rows.length} papers)
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={pending || allOddRows.length === 0}
+            onClick={() =>
+              startTransition(async () => {
+                const res = await importOfficialCatalogueAllOdd(
+                  targetSemesterId,
+                  { includeNeedsReview: includeReview },
+                );
+                setMessage(res.ok ? res.message ?? "Imported" : res.error);
+              })
+            }
+          >
+            Import all odd sems 1+3+5+7 ({allOddRows.length})
           </Button>
         </div>
       </div>

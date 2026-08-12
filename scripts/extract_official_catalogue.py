@@ -355,8 +355,8 @@ def parse_sem357(entries: list[PaperEntry]) -> None:
 
     sec(7, "Physics", "113", "Document Preparation and Presentation Software")
 
-    sec(3, "Biology", "Biology Lab", "Mushroom Culture and Technology-1")
-    sec(5, "Biology", "Biology Lab", "Mushroom Culture and Technology-1")
+    sec(3, "Biology", "Biology Lab", "Mushroom Cultivation and Technology 1")
+    sec(5, "Biology", "Biology Lab", "Mushroom Cultivation and Technology 1")
 
     sec(3, "Other", None, "Working with People")
     sec(5, "Other", None, "Practices in Horoscopes -1")
@@ -430,7 +430,7 @@ def parse_sem357(entries: list[PaperEntry]) -> None:
         (3, 5, 7, "English", "125", "Dystopian Writings (courses other than B.A.Pr)", None, "Indian English Literatures"),
         (3, 5, 7, "Business Economics", "336", "Economics of Start-up", "Economic Policy Framework", "International Economics"),
         (3, 5, 7, "Computer Science", "218", "Database Management System", "Advance Web Programming (Basic knowledge of HTML required)", None),
-        (3, 5, 7, "Economics", "232", "Theory of Public Finance", "Essentials of Economics (for Prog.)", "Money and Banking"),
+        (3, 5, 7, "Economics", "232", "Theory of Public Finance", "Essentials of Economics", "Money and Banking"),
         (3, 5, 7, "Economics", "232", None, "Basic Development Theory (for Hons.)", "Principles of Microeconomics 2"),
         (3, 5, 7, "History", "232", "Politics of Nature", "World History", None),
         (3, 5, 7, "Hindi", "131", "Hindi ka Vaishvik Paridreshya", "Hindi Sahitya ka itihas (adhunik Kaal) (for Hons.)", "Hindi Sahitya ka itihas (bhag-1) (for Hons.)"),

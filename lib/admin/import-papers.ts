@@ -67,37 +67,99 @@ export async function validateImportRows(
   return errors;
 }
 
-/** Import catalogue rows into an empty semester (no admin session). */
+export type ImportCatalogueResult = {
+  imported: number;
+  skipped: number;
+  errors: string[];
+};
+
 export async function importCatalogueRows(
   semesterId: string,
   rows: ImportRow[],
-): Promise<{ imported: number; errors: string[] }> {
+  options?: { skipExisting?: boolean },
+): Promise<ImportCatalogueResult> {
+  const skipExisting = options?.skipExisting ?? false;
   const coursesByName = await loadCoursesByName();
-  const errors = await validateImportRows(semesterId, rows, coursesByName);
-  if (errors.length > 0) {
-    return { imported: 0, errors };
+
+  if (!skipExisting) {
+    const errors = await validateImportRows(semesterId, rows, coursesByName);
+    if (errors.length > 0) {
+      return { imported: 0, skipped: 0, errors };
+    }
   }
 
-  await prisma.$transaction(
-    async (tx) => {
-      for (const p of rows) {
-        const dept = await tx.department.findFirst({
-          where: { name: { equals: p.department.trim(), mode: "insensitive" } },
-        });
-        if (!dept) throw new Error(`Department missing: ${p.department}`);
-        const { eligibilities } = mapImportEligibilities(
-          p.eligibilities,
-          coursesByName,
-        );
-        await tx.paper.create({
-          data: paperImportCreateData(semesterId, p, dept.id, eligibilities),
-        });
-      }
-    },
-    { maxWait: 60_000, timeout: 120_000 },
+  const departments = await prisma.department.findMany({
+    where: { active: true },
+    select: { id: true, name: true },
+  });
+  const deptByName = new Map(
+    departments.map((d) => [d.name.trim().toLowerCase(), d.id]),
   );
 
-  return { imported: rows.length, errors: [] };
+  const existingPapers = await prisma.paper.findMany({
+    where: { semesterId },
+    select: { paperType: true, paperName: true, departmentId: true },
+  });
+  const existingKeys = new Set(
+    existingPapers.map(
+      (p) =>
+        `${p.paperType}|${p.paperName.trim().toLowerCase()}|${p.departmentId}`,
+    ),
+  );
+
+  let imported = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  const createRow = async (
+    p: ImportRow,
+    db: Pick<typeof prisma, "paper"> = prisma,
+  ) => {
+    const rowLabel = `${p.paperType} — ${p.paperName}`;
+    const deptId = deptByName.get(p.department.trim().toLowerCase());
+    if (!deptId) {
+      errors.push(`${rowLabel}: Unknown department "${p.department}"`);
+      return;
+    }
+
+    const key = `${p.paperType}|${p.paperName.trim().toLowerCase()}|${deptId}`;
+    if (existingKeys.has(key)) {
+      skipped += 1;
+      return;
+    }
+
+    const { eligibilities, error: eligError } = mapImportEligibilities(
+      p.eligibilities,
+      coursesByName,
+    );
+    if (eligError) {
+      errors.push(`${rowLabel}: ${eligError}`);
+      return;
+    }
+
+    await db.paper.create({
+      data: paperImportCreateData(semesterId, p, deptId, eligibilities),
+    });
+    existingKeys.add(key);
+    imported += 1;
+  };
+
+  if (skipExisting) {
+    for (const p of rows) {
+      await createRow(p);
+    }
+  } else {
+    await prisma.$transaction(
+      async (tx) => {
+        for (const p of rows) {
+          await createRow(p, tx);
+        }
+      },
+      { maxWait: 60_000, timeout: 120_000 },
+    );
+  }
+
+  return { imported, skipped, errors };
 }
 
 export function mapImportEligibilities(

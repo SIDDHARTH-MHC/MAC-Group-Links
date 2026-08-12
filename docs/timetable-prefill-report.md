@@ -10,17 +10,8 @@
 For **Generic Elective (GE) odd 2026–27**, use **`ge 2026.pdf`** in Downloads (Department: GE, slots like `POL-GE8_…`).
 
 ## Prefill rows: 112
-## Timetable course codes not matched to catalogue: 9
+## Timetable course codes not matched to catalogue: 0
 
-- **GE** `HIS-GE8_HIS_HT` — MEDIA AND CINEMA_L
-- **GE** `COM-GE6_COM` — LEADERSHIP AND DEVELOPMENT_L
-- **GE** `CS-GE6_CS` — DATA PRIVACY_L
-- **GE** `ENG-GE6_ENG` — CINEMATIC ADAPTATIONS OFLITERARY TEXTS_L
-- **GE** `POL-GE6_POL` — WOMEN AND POLITICS ININDIA: CONCEPTS AND DEBATES_L
-- **GE** `ECO-GE6_ECO` — CINEMATIC ADAPTATIONS OFLITERARY TEXTS_L
-- **GE** `HIS-GE6_HIS` — MEDIA AND CINEMA_L
-- **GE** `JOU-GE6_JOU` — INVESTIGATIVE REPORTING_L
-- **GE** `COM-GE8_COM_WD` — WORKPLACE DIVERSITY_L
 
 ## Catalogue papers not seen in these timetables
 
@@ -69,7 +60,7 @@ For **Generic Elective (GE) odd 2026–27**, use **`ge 2026.pdf`** in Downloads 
 - Economics of Start-up
 - Electricity and Magnetism
 - Elementary Mathematical Analysis
-- Essentials of Economics (for Prog.)
+- Essentials of Economics
 - Fitness and wellness
 - Fundamental of calculus
 - Fundamentals of Human Resource Mgmt. (for hons. Courses only)

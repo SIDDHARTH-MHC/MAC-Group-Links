@@ -233,8 +233,12 @@ export async function importOfficialCatalogue(
     return { ok: false, error: "No importable rows for this semester." };
   }
 
-  const { imported, errors } = await importCatalogueRows(semesterId, rows);
-  if (errors.length > 0) {
+  const { imported, skipped, errors } = await importCatalogueRows(
+    semesterId,
+    rows,
+    { skipExisting: true },
+  );
+  if (errors.length > 0 && imported === 0 && skipped === 0) {
     return {
       ok: false,
       error: `Import failed:\n${errors.slice(0, 12).join("\n")}`,
@@ -243,14 +247,76 @@ export async function importOfficialCatalogue(
 
   await logAdminAction(
     "PAPER_IMPORTED",
-    `Imported ${imported} official catalogue papers (sem ${catalogueSemesterNumber})`,
+    `Imported ${imported} official catalogue papers (sem ${catalogueSemesterNumber}); skipped ${skipped} existing`,
     "Semester",
     semesterId,
   );
+  revalidatePublicCatalogue();
   revalidatePath("/admin/papers");
+  revalidatePath("/admin/papers/import");
+  const parts = [`Imported ${imported} new papers`];
+  if (skipped > 0) {
+    parts.push(`skipped ${skipped} already in catalogue (groups unchanged)`);
+  }
+  if (errors.length > 0) {
+    parts.push(`${errors.length} row(s) had errors`);
+  }
   return {
     ok: true,
-    message: `Imported ${imported} papers from official catalogue (semester ${catalogueSemesterNumber}).`,
+    message: `${parts.join("; ")} from catalogue semester ${catalogueSemesterNumber}.`,
+  };
+}
+
+const ODD_CATALOGUE_SEMESTERS = [1, 3, 5, 7] as const;
+
+export async function importOfficialCatalogueAllOdd(
+  semesterId: string,
+  options?: { includeNeedsReview?: boolean },
+): Promise<ActionResult> {
+  await requireAdminSession();
+  const includeNeedsReview = options?.includeNeedsReview ?? false;
+  const rows = ODD_CATALOGUE_SEMESTERS.flatMap((sem) =>
+    previewOfficialCatalogue(sem).rows.filter(
+      (r) => includeNeedsReview || !r.needsReview,
+    ),
+  );
+  if (rows.length === 0) {
+    return { ok: false, error: "No importable rows in odd-sem catalogue." };
+  }
+
+  const { imported, skipped, errors } = await importCatalogueRows(
+    semesterId,
+    rows,
+    { skipExisting: true },
+  );
+  if (errors.length > 0 && imported === 0 && skipped === 0) {
+    return {
+      ok: false,
+      error: `Import failed:\n${errors.slice(0, 12).join("\n")}`,
+    };
+  }
+
+  await logAdminAction(
+    "PAPER_IMPORTED",
+    `Imported ${imported} odd-sem catalogue papers (sem 1+3+5+7); skipped ${skipped} existing`,
+    "Semester",
+    semesterId,
+  );
+  revalidatePublicCatalogue();
+  revalidatePath("/admin/papers");
+  revalidatePath("/admin/papers/import");
+  const parts = [`Imported ${imported} new papers`];
+  if (skipped > 0) {
+    parts.push(
+      `left ${skipped} existing papers untouched (including any with group links)`,
+    );
+  }
+  if (errors.length > 0) {
+    parts.push(`${errors.length} row(s) had errors`);
+  }
+  return {
+    ok: true,
+    message: `${parts.join("; ")} from odd semesters 1, 3, 5, and 7.`,
   };
 }
 

@@ -121,7 +121,7 @@ SEC_CODE_TO_NAME: dict[str, str] = {
     "WWP": "Working with People",
     "PEWSD": "Prospecting ewaste for sustainability",
     "PHORO": "Practices in Horoscope – 1",
-    "MC&T-1": "Mushroom Culture and Technology-1",
+    "MC&T-1": "Mushroom Cultivation and Technology 1",
 }
 
 VAC_CODE_TO_NAME: dict[str, str] = {

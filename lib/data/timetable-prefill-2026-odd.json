@@ -448,7 +448,7 @@
       "days": "Monday, Tuesday, Wednesday, Thursday",
       "startTime": null,
       "endTime": null,
-      "cataloguePaperName": "Mushroom Culture and Technology-1"
+      "cataloguePaperName": "Mushroom Cultivation and Technology 1"
     },
     {
       "paperType": "SEC",
@@ -1072,7 +1072,7 @@
       "days": "Monday",
       "startTime": "8:30 AM, 11:30 AM",
       "endTime": "9:30 AM, 12:30 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Media and Cinema"
     },
     {
       "paperType": "GE",
@@ -1085,7 +1085,7 @@
       "days": "Tuesday, Thursday",
       "startTime": "8:30 AM",
       "endTime": "9:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Leadership and Development"
     },
     {
       "paperType": "GE",
@@ -1098,7 +1098,7 @@
       "days": "Tuesday, Thursday",
       "startTime": "9:30 AM",
       "endTime": "10:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Data Privacy"
     },
     {
       "paperType": "GE",
@@ -1124,7 +1124,7 @@
       "days": "Tuesday",
       "startTime": "11:30 AM",
       "endTime": "12:30 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Cinematic Adaptations of Literary Texts"
     },
     {
       "paperType": "GE",
@@ -1150,7 +1150,7 @@
       "days": "Tuesday",
       "startTime": "3:00 PM",
       "endTime": "4:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Women and Politics in India: Concepts and Debates"
     },
     {
       "paperType": "GE",
@@ -1202,7 +1202,7 @@
       "days": "Wednesday",
       "startTime": "12:30 PM",
       "endTime": "1:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Media and Cinema"
     },
     {
       "paperType": "GE",
@@ -1215,7 +1215,7 @@
       "days": "Thursday",
       "startTime": "10:30 AM",
       "endTime": "11:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Cinematic Adaptations of Literary Texts"
     },
     {
       "paperType": "GE",
@@ -1228,7 +1228,7 @@
       "days": "Thursday",
       "startTime": "12:30 PM",
       "endTime": "1:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Media and Cinema"
     },
     {
       "paperType": "GE",
@@ -1241,7 +1241,7 @@
       "days": "Thursday",
       "startTime": "1:00 PM",
       "endTime": "2:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Investigative Reporting"
     },
     {
       "paperType": "GE",
@@ -1267,7 +1267,7 @@
       "days": "Friday",
       "startTime": "10:30 AM",
       "endTime": "11:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Media and Cinema"
     },
     {
       "paperType": "GE",
@@ -1293,7 +1293,7 @@
       "days": "Monday",
       "startTime": "11:30 AM",
       "endTime": "12:30 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Media and Cinema"
     },
     {
       "paperType": "GE",
@@ -1306,7 +1306,7 @@
       "days": "Monday",
       "startTime": "1:00 PM",
       "endTime": "2:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Investigative Reporting"
     },
     {
       "paperType": "GE",
@@ -1358,7 +1358,7 @@
       "days": "Wednesday",
       "startTime": "10:30 AM",
       "endTime": "11:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Workplace Diversity"
     },
     {
       "paperType": "GE",
@@ -1371,7 +1371,7 @@
       "days": "Tuesday, Thursday",
       "startTime": "9:30 AM",
       "endTime": "10:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Data Privacy"
     },
     {
       "paperType": "GE",
@@ -1436,7 +1436,7 @@
       "days": "Monday",
       "startTime": "8:30 AM",
       "endTime": "9:30 AM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Data Privacy"
     },
     {
       "paperType": "GE",
@@ -1449,7 +1449,7 @@
       "days": "Monday",
       "startTime": "11:30 AM",
       "endTime": "12:30 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Cinematic Adaptations of Literary Texts"
     },
     {
       "paperType": "GE",
@@ -1462,65 +1462,10 @@
       "days": "Monday",
       "startTime": "12:30 PM",
       "endTime": "1:00 PM",
-      "cataloguePaperName": null
+      "cataloguePaperName": "Investigative Reporting"
     }
   ],
-  "missingInCatalogue": [
-    {
-      "paperType": "GE",
-      "courseCode": "HIS-GE8_HIS_HT",
-      "timetableTitle": "MEDIA AND CINEMA_L",
-      "teacherSample": "BHUPINDER KUMAR CHAUDHARY"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "COM-GE6_COM",
-      "timetableTitle": "LEADERSHIP AND DEVELOPMENT_L",
-      "teacherSample": "KUNDAN KUMAR"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "CS-GE6_CS",
-      "timetableTitle": "DATA PRIVACY_L",
-      "teacherSample": "AVANEESH ANAND"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "ENG-GE6_ENG",
-      "timetableTitle": "CINEMATIC ADAPTATIONS OFLITERARY TEXTS_L",
-      "teacherSample": "AISHWARYA JHA"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "POL-GE6_POL",
-      "timetableTitle": "WOMEN AND POLITICS ININDIA: CONCEPTS AND DEBATES_L",
-      "teacherSample": "CHANDRIKA ARYA"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "ECO-GE6_ECO",
-      "timetableTitle": "CINEMATIC ADAPTATIONS OFLITERARY TEXTS_L",
-      "teacherSample": "AISHWARYA JHA"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "HIS-GE6_HIS",
-      "timetableTitle": "MEDIA AND CINEMA_L",
-      "teacherSample": "BHUPINDER KUMAR CHAUDHARY"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "JOU-GE6_JOU",
-      "timetableTitle": "INVESTIGATIVE REPORTING_L",
-      "teacherSample": "SHRUTI GOEL"
-    },
-    {
-      "paperType": "GE",
-      "courseCode": "COM-GE8_COM_WD",
-      "timetableTitle": "WORKPLACE DIVERSITY_L",
-      "teacherSample": "NEHA KUHAR"
-    }
-  ],
+  "missingInCatalogue": [],
   "catalogueNotInTimetable": {
     "SEC": [
       "Advanced Spreadsheet Tools",
@@ -1567,7 +1512,7 @@
       "Economics of Start-up",
       "Electricity and Magnetism",
       "Elementary Mathematical Analysis",
-      "Essentials of Economics (for Prog.)",
+      "Essentials of Economics",
       "Fitness and wellness",
       "Fundamental of calculus",
       "Fundamentals of Human Resource Mgmt. (for hons. Courses only)",
