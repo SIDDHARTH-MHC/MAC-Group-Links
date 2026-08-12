@@ -24,6 +24,7 @@ export async function duplicateGroupLinkMessage(
   paperId: string,
   normalizedGroupLink: string,
   excludeGroupId?: string,
+  excludeContributionId?: string,
 ) {
   const existing = await prisma.group.findFirst({
     where: {
@@ -38,6 +39,7 @@ export async function duplicateGroupLinkMessage(
       paperId,
       normalizedGroupLink,
       status: "PENDING",
+      ...(excludeContributionId ? { NOT: { id: excludeContributionId } } : {}),
     },
   });
   if (pending) return "This group link is already pending review for this paper.";

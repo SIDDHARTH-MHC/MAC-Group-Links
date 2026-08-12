@@ -456,7 +456,12 @@ export async function approveContribution(
   }
 
   const normalized = c.normalizedGroupLink || normalizeGroupLink(c.groupLink);
-  const dupMsg = await duplicateGroupLinkMessage(c.paperId, normalized);
+  const dupMsg = await duplicateGroupLinkMessage(
+    c.paperId,
+    normalized,
+    undefined,
+    contributionId,
+  );
   if (dupMsg) return { ok: false, error: dupMsg };
 
   if (await paperHasActiveGroupLink(c.paperId)) {
@@ -467,6 +472,21 @@ export async function approveContribution(
   }
 
   await prisma.$transaction(async (tx) => {
+    const eligibilityRows =
+      c.eligibilities.length > 0
+        ? c.eligibilities
+        : c.appliesToAll
+          ? [
+              {
+                courseId: null,
+                year: null,
+                combination: null,
+                notes: null,
+                appliesToAll: true,
+              },
+            ]
+          : [];
+
     const group = await tx.group.create({
       data: {
         paperId: c.paperId,
@@ -483,7 +503,7 @@ export async function approveContribution(
         contributorType: c.contributorType,
         contributionId: c.id,
         eligibilities: {
-          create: c.eligibilities.map((e) => ({
+          create: eligibilityRows.map((e) => ({
             courseId: e.courseId,
             year: e.year,
             combination: e.combination,
@@ -503,6 +523,38 @@ export async function approveContribution(
   revalidatePath("/admin/contributions");
   revalidatePublicCatalogue(c.paperId);
   return { ok: true };
+}
+
+export type ApproveAllContributionsResult = {
+  approved: number;
+  failed: { label: string; error: string }[];
+};
+
+export async function approveAllContributions(): Promise<ApproveAllContributionsResult> {
+  await requireAdminSession();
+  const pending = await prisma.groupContribution.findMany({
+    where: { status: "PENDING" },
+    include: { paper: { select: { paperName: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const failed: { label: string; error: string }[] = [];
+  let approved = 0;
+
+  for (const contribution of pending) {
+    const result = await approveContribution(contribution.id);
+    if (result.ok) {
+      approved += 1;
+    } else {
+      failed.push({
+        label: contribution.paper.paperName,
+        error: result.error,
+      });
+    }
+  }
+
+  revalidatePath("/admin/contributions");
+  return { approved, failed };
 }
 
 export async function rejectContribution(
