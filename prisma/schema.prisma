@@ -330,3 +330,9 @@ model AdminAuditLog {
 
   @@index([createdAt])
 }
+
+model SiteSettings {
+  id                        String   @id @default("default")
+  autoApproveContributions  Boolean  @default(false)
+  updatedAt                 DateTime @updatedAt
+}

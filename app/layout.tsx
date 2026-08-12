@@ -17,6 +17,18 @@ export const metadata: Metadata = {
   title: "MAC Group Links | Maharaja Agrasen College",
   description:
     "Find SEC, VAC, GE, DSE, AEC and Core course group links for Maharaja Agrasen College.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      noarchive: true,
+      nosnippet: true,
+    },
+  },
 };
 
 export default function RootLayout({

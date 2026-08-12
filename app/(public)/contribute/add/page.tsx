@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { paperHasActiveGroupLink, paperHasPendingContribution } from "@/lib/db/group-visibility";
 import { getCourses } from "@/lib/actions/public";
 import { ContributeForm } from "@/components/forms/contribute-form";
+import { ContributeAccuracyDisclaimer } from "@/components/layout/info-disclaimer";
 import { Button } from "@/components/ui/button";
 
 type Props = { searchParams: Promise<{ paperId?: string }> };
@@ -50,6 +51,7 @@ export default async function ContributeAddPage({ searchParams }: Props) {
         <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
           Help your classmates find their class group.
         </p>
+        <ContributeAccuracyDisclaimer />
         {selectedPaper ? (
           <p className="mt-4 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
             <span className="text-muted-foreground">Paper: </span>

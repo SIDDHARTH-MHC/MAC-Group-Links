@@ -15,6 +15,8 @@ import {
   paperHasPendingContribution,
 } from "@/lib/db/group-visibility";
 import { getAuthoritativeCourses } from "@/lib/courses/db-courses";
+import { executeApproveContribution } from "@/lib/contributions/approve-contribution";
+import { getAutoApproveContributions } from "@/lib/settings/site";
 import { revalidatePath } from "next/cache";
 import { SuggestionType } from "@prisma/client";
 
@@ -68,7 +70,7 @@ export async function submitGroupContribution(
     return { ok: false, error: dupMsg };
   }
 
-  await prisma.groupContribution.create({
+  const contribution = await prisma.groupContribution.create({
     data: {
       paperId: data.paperId,
       sectionName: data.sectionName || "Group",
@@ -100,6 +102,20 @@ export async function submitGroupContribution(
   revalidatePath("/papers");
   revalidatePath("/search");
   revalidatePath(`/paper/${data.paperId}`);
+
+  if (await getAutoApproveContributions()) {
+    const approved = await executeApproveContribution(contribution.id, {
+      auditDescription: `Auto-approved on submit: ${contribution.sectionName || "Group"}`,
+    });
+    if (approved.ok) {
+      revalidatePath("/admin/contributions");
+      return {
+        ok: true,
+        message: "Your group link is live on the site.",
+      };
+    }
+  }
+
   return {
     ok: true,
     message:

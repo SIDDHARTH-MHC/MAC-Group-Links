@@ -21,6 +21,8 @@ import {
   validateImportRows,
 } from "@/lib/admin/import-papers";
 import { previewOfficialCatalogue } from "@/lib/catalogue/official";
+import { executeApproveContribution } from "@/lib/contributions/approve-contribution";
+import { setAutoApproveContributions as persistAutoApproveContributions } from "@/lib/settings/site";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -513,82 +515,26 @@ export async function approveContribution(
   contributionId: string
 ): Promise<ActionResult> {
   await requireAdminSession();
-  const c = await prisma.groupContribution.findUnique({
-    where: { id: contributionId },
-    include: { eligibilities: true },
-  });
-  if (!c || c.status !== "PENDING") {
-    return { ok: false, error: "Contribution not found or already processed" };
-  }
-
-  const normalized = c.normalizedGroupLink || normalizeGroupLink(c.groupLink);
-  const dupMsg = await duplicateGroupLinkMessage(
-    c.paperId,
-    normalized,
-    undefined,
-    contributionId,
-  );
-  if (dupMsg) return { ok: false, error: dupMsg };
-
-  if (await paperHasActiveGroupLink(c.paperId)) {
-    return {
-      ok: false,
-      error: "This paper already has a group link. Edit or delete it in admin first.",
-    };
-  }
-
-  await prisma.$transaction(async (tx) => {
-    const eligibilityRows =
-      c.eligibilities.length > 0
-        ? c.eligibilities
-        : c.appliesToAll
-          ? [
-              {
-                courseId: null,
-                year: null,
-                combination: null,
-                notes: null,
-                appliesToAll: true,
-              },
-            ]
-          : [];
-
-    const group = await tx.group.create({
-      data: {
-        paperId: c.paperId,
-        sectionName: c.sectionName || "Group",
-        teacherName: c.teacherName,
-        actualClassRoom: c.actualClassRoom,
-        days: c.days,
-        startTime: c.startTime,
-        endTime: c.endTime,
-        groupPlatform: c.groupPlatform,
-        groupLink: c.groupLink.trim(),
-        normalizedGroupLink: normalized,
-        contributorName: c.contributorName,
-        contributorType: c.contributorType,
-        contributionId: c.id,
-        eligibilities: {
-          create: eligibilityRows.map((e) => ({
-            courseId: e.courseId,
-            year: e.year,
-            combination: e.combination,
-            notes: e.notes,
-            appliesToAll: e.appliesToAll,
-          })),
-        },
-      },
-    });
-    await tx.groupContribution.update({
-      where: { id: contributionId },
-      data: { status: "APPROVED" },
-    });
-    await logAdminAction("GROUP_APPROVED", group.sectionName, "Group", group.id);
-  });
+  const result = await executeApproveContribution(contributionId);
+  if (!result.ok) return result;
 
   revalidatePath("/admin/contributions");
-  revalidatePublicCatalogue(c.paperId);
+  revalidatePublicCatalogue(result.paperId);
   return { ok: true };
+}
+
+export async function setAutoApproveContributions(
+  enabled: boolean,
+): Promise<ActionResult> {
+  await requireAdminSession();
+  await persistAutoApproveContributions(enabled);
+  revalidatePath("/admin/contributions");
+  return {
+    ok: true,
+    message: enabled
+      ? "New contributions will be approved automatically."
+      : "Contributions will require manual approval.",
+  };
 }
 
 export type ApproveAllContributionsResult = {
@@ -608,9 +554,10 @@ export async function approveAllContributions(): Promise<ApproveAllContributions
   let approved = 0;
 
   for (const contribution of pending) {
-    const result = await approveContribution(contribution.id);
+    const result = await executeApproveContribution(contribution.id);
     if (result.ok) {
       approved += 1;
+      revalidatePublicCatalogue(result.paperId);
     } else {
       failed.push({
         label: contribution.paper.paperName,
