@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getActiveSemester } from "@/lib/db/semester";
-import { listPapersOpenForContribution } from "@/lib/db/queries";
+import { listPapersForContribution } from "@/lib/db/queries";
 import { prisma } from "@/lib/db/prisma";
-import { paperHasActiveGroupLink, paperHasPendingContribution } from "@/lib/db/group-visibility";
 import { getCourses } from "@/lib/actions/public";
 import { ContributeForm } from "@/components/forms/contribute-form";
 import { ContributeAccuracyDisclaimer } from "@/components/layout/info-disclaimer";
@@ -15,28 +14,18 @@ export default async function ContributeAddPage({ searchParams }: Props) {
   const sp = await searchParams;
   const semester = await getActiveSemester();
   const papers = semester
-    ? await listPapersOpenForContribution(semester.id)
+    ? await listPapersForContribution(semester.id)
     : [];
   const courses = await getCourses();
   const selectedPaper = sp.paperId
     ? papers.find((p) => p.id === sp.paperId)
     : null;
-  const blockedPaperId =
-    sp.paperId && !selectedPaper ? sp.paperId : undefined;
-  const blockedPaper =
-    blockedPaperId && semester
+  const unknownPaper =
+    sp.paperId && !selectedPaper && semester
       ? await prisma.paper.findFirst({
-          where: { id: blockedPaperId, semesterId: semester.id },
+          where: { id: sp.paperId, semesterId: semester.id },
           select: { paperName: true, paperType: true },
         })
-      : null;
-  const blockedReason =
-    blockedPaperId && semester
-      ? (await paperHasActiveGroupLink(blockedPaperId))
-        ? "already has a published group link"
-        : (await paperHasPendingContribution(blockedPaperId))
-          ? "already has a submission awaiting admin review"
-          : "is not available to add"
       : null;
 
   return (
@@ -59,21 +48,22 @@ export default async function ContributeAddPage({ searchParams }: Props) {
               [{selectedPaper.paperType}] {selectedPaper.paperName}
             </span>
           </p>
-        ) : blockedPaper ? (
+        ) : unknownPaper ? (
           <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-            [{blockedPaper.paperType}] {blockedPaper.paperName} —{" "}
-            {blockedReason}. Only admin can change or remove the link.
+            [{unknownPaper.paperType}] {unknownPaper.paperName} is not available
+            to add a group link.
           </p>
         ) : null}
       </header>
-      {papers.length === 0 ? (
+      {!semester ? (
+        <p className="text-muted-foreground">No active semester configured.</p>
+      ) : papers.length === 0 ? (
         <p className="text-muted-foreground">
-          Every paper in this semester already has a group link or one is pending
-          review. You can{" "}
+          No papers in the catalogue yet. You can{" "}
           <Link href="/suggest" className="text-primary underline">
             suggest a paper
           </Link>{" "}
-          or browse existing links under Papers.
+          first.
         </p>
       ) : (
         <Suspense fallback={null}>

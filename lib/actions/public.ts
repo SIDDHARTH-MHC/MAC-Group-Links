@@ -47,11 +47,12 @@ export async function submitGroupContribution(
   const data = parsed.data;
   await assertPaperInActiveSemester(data.paperId);
 
-  if (await paperHasActiveGroupLink(data.paperId)) {
+  const hasExistingLink = await paperHasActiveGroupLink(data.paperId);
+  if (hasExistingLink && !data.insistDespiteExistingLink) {
     return {
       ok: false,
       error:
-        "This paper already has a group link. Ask admin to update or remove it first.",
+        "A group link is already available for this paper. Open the paper page to join it, or confirm below if you want to submit a different link for admin review.",
     };
   }
   if (await paperHasPendingContribution(data.paperId)) {
@@ -104,7 +105,7 @@ export async function submitGroupContribution(
   revalidatePath("/search");
   revalidatePath(`/paper/${data.paperId}`);
 
-  if (await getAutoApproveContributions()) {
+  if (await getAutoApproveContributions() && !hasExistingLink) {
     const approved = await executeApproveContribution(contribution.id, {
       auditDescription: `Auto-approved on submit: ${contribution.sectionName || "Group"}`,
     });
@@ -119,8 +120,9 @@ export async function submitGroupContribution(
 
   return {
     ok: true,
-    message:
-      "Your submission has been sent to the admin for review.",
+    message: hasExistingLink
+      ? "Your alternative group link has been sent to the admin for review."
+      : "Your submission has been sent to the admin for review.",
   };
 }
 

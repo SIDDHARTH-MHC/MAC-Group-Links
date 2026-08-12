@@ -3,7 +3,6 @@ import type { PaperType } from "@prisma/client";
 import {
   activeGroupWithLinkWhere,
   publicPaperCatalogueWhere,
-  paperOpenForContributionWhere,
 } from "@/lib/db/group-visibility";
 
 const paperInclude = {
@@ -124,20 +123,38 @@ export async function listCataloguePapersForSuggestions(semesterId: string) {
 }
 
 export async function listPapersOpenForContribution(semesterId: string) {
-  return prisma.paper.findMany({
+  return listPapersForContribution(semesterId);
+}
+
+export async function listPapersForContribution(semesterId: string) {
+  const rows = await prisma.paper.findMany({
     where: {
       semesterId,
       archivedAt: null,
-      ...paperOpenForContributionWhere,
     },
     select: {
       id: true,
       paperName: true,
       paperType: true,
       department: { select: { name: true } },
+      _count: {
+        select: {
+          groups: { where: activeGroupWithLinkWhere },
+          contributions: { where: { status: "PENDING" } },
+        },
+      },
     },
     orderBy: [{ paperType: "asc" }, { paperName: "asc" }],
   });
+
+  return rows.map((p) => ({
+    id: p.id,
+    paperName: p.paperName,
+    paperType: p.paperType,
+    department: p.department,
+    hasActiveGroupLink: p._count.groups > 0,
+    hasPendingContribution: p._count.contributions > 0,
+  }));
 }
 
 export async function getRecentGroups(semesterId: string, limit = 6) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,8 @@ export function ContributeForm({
     paperName: string;
     paperType: string;
     department: { name: string };
+    hasActiveGroupLink: boolean;
+    hasPendingContribution: boolean;
   }[];
   courses: Course[];
   initialPaperId?: string;
@@ -70,6 +73,9 @@ export function ContributeForm({
   const validPaperId = papersForType.some((p) => p.id === paperId)
     ? paperId
     : "";
+  const selectedPaper = papersForType.find((p) => p.id === validPaperId);
+  const [insistDespiteExistingLink, setInsistDespiteExistingLink] =
+    useState(false);
   const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const [multiAudience, setMultiAudience] =
     useState<MultiAudienceState>(emptyMultiAudience);
@@ -148,6 +154,20 @@ export function ContributeForm({
       setMessage({ ok: false, text: "Select a paper name" });
       return;
     }
+    if (selectedPaper?.hasPendingContribution) {
+      setMessage({
+        ok: false,
+        text: "A group link for this paper is already waiting for admin review.",
+      });
+      return;
+    }
+    if (selectedPaper?.hasActiveGroupLink && !insistDespiteExistingLink) {
+      setMessage({
+        ok: false,
+        text: "Please confirm below that you want to submit a different link for admin review.",
+      });
+      return;
+    }
     const audErr = validateEligibilityAudience(
       audienceMode,
       { courseId, year, combination },
@@ -182,6 +202,9 @@ export function ContributeForm({
         contributorType,
         appliesToAll: audienceMode === "all",
         eligibilities,
+        insistDespiteExistingLink: selectedPaper?.hasActiveGroupLink
+          ? insistDespiteExistingLink
+          : undefined,
       });
       setMessage({
         ok: res.ok,
@@ -242,6 +265,7 @@ export function ContributeForm({
           value={validPaperId}
           onValueChange={(id) => {
             setPaperId(id);
+            setInsistDespiteExistingLink(false);
             setMessage(null);
             applyTimetablePrefill(papersForType.find((p) => p.id === id));
           }}
@@ -258,6 +282,42 @@ export function ContributeForm({
           }
         />
       </div>
+
+      {selectedPaper?.hasActiveGroupLink ? (
+        <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          <p>
+            A group link is already available for this paper.{" "}
+            <Link
+              href={`/paper/${selectedPaper.id}`}
+              className="font-medium underline underline-offset-2"
+            >
+              View the existing link
+            </Link>{" "}
+            before submitting another one.
+          </p>
+          <label className="flex cursor-pointer items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={insistDespiteExistingLink}
+              onChange={(e) => {
+                setInsistDespiteExistingLink(e.target.checked);
+                setMessage(null);
+              }}
+            />
+            <span>
+              I want to submit a different group link anyway. It will stay
+              pending until an admin reviews it.
+            </span>
+          </label>
+        </div>
+      ) : null}
+
+      {selectedPaper?.hasPendingContribution ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          A group link for this paper is already waiting for admin review.
+        </p>
+      ) : null}
 
       <EligibilityAudienceFields
         courses={courses}
@@ -369,7 +429,11 @@ export function ContributeForm({
       <Button
         className="w-full"
         size="lg"
-        disabled={pending}
+        disabled={
+          pending ||
+          selectedPaper?.hasPendingContribution ||
+          (selectedPaper?.hasActiveGroupLink && !insistDespiteExistingLink)
+        }
         onClick={submit}
       >
         {pending ? "Submitting…" : "Submit group link"}

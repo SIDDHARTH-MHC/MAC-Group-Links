@@ -43,6 +43,7 @@ export const groupContributionSchema = z.object({
   contributorType: z.nativeEnum(ContributorType).optional(),
   appliesToAll: z.boolean().default(false),
   eligibilities: z.array(eligibilityRowSchema).default([]),
+  insistDespiteExistingLink: z.boolean().optional(),
 });
 
 export const suggestionSchema = z.object({
