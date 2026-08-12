@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PaperGroupsList } from "@/components/groups/paper-groups-list";
+import { GroupLinksVerifyDisclaimer } from "@/components/layout/info-disclaimer";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -68,6 +69,7 @@ export default async function PaperDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
+      <GroupLinksVerifyDisclaimer />
       <div className="space-y-4">
         <Badge variant="secondary">{getPaperTypeLabel(paper.paperType).short}</Badge>
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
