@@ -70,7 +70,7 @@ export function ContributeForm({
   const validPaperId = papersForType.some((p) => p.id === paperId)
     ? paperId
     : "";
-  const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const [multiAudience, setMultiAudience] =
     useState<MultiAudienceState>(emptyMultiAudience);
   const [courseId, setCourseId] = useState("");

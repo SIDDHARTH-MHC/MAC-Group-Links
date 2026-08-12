@@ -223,7 +223,7 @@ function EditSuggestionForm({
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
-  const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const [multiAudience, setMultiAudience] =
     useState<MultiAudienceState>(emptyMultiAudience);
   const [suggestedCorrection, setSuggestedCorrection] = useState("");
@@ -502,7 +502,7 @@ function NewPaperSuggestionForm({
   const [courseId, setCourseId] = useState("");
   const [year, setYear] = useState("2");
   const [combination, setCombination] = useState("");
-  const [audienceMode, setAudienceMode] = useState<AudienceMode>("single");
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("all");
   const [multiAudience, setMultiAudience] =
     useState<MultiAudienceState>(emptyMultiAudience);
   const [notes, setNotes] = useState("");
