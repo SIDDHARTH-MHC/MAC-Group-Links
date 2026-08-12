@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/group-visibility";
 import { getAuthoritativeCourses } from "@/lib/courses/db-courses";
 import { executeApproveContribution } from "@/lib/contributions/approve-contribution";
+import { executeApplyNewPaperSuggestion } from "@/lib/suggestions/apply-new-paper-suggestion";
 import { getAutoApproveContributions } from "@/lib/settings/site";
 import { revalidatePath } from "next/cache";
 import { SuggestionType } from "@prisma/client";
@@ -167,7 +168,11 @@ export async function submitNewPaperSuggestion(
   }
   const data = parsed.data;
 
-  await prisma.suggestion.create({
+  const linkFields = data.groupLink?.trim()
+    ? groupLinkFields(data.groupLink)
+    : null;
+
+  const suggestion = await prisma.suggestion.create({
     data: {
       type: SuggestionType.NEW_PAPER,
       description: data.notes || `New paper: ${data.paperName}`,
@@ -178,6 +183,9 @@ export async function submitNewPaperSuggestion(
       sourceDocumentUrl: data.sourceDocumentUrl || undefined,
       contributorName: data.contributorName,
       contributorType: data.contributorType,
+      groupPlatform: linkFields ? (data.groupPlatform ?? "WHATSAPP") : undefined,
+      groupLink: linkFields?.groupLink,
+      normalizedGroupLink: linkFields?.normalizedGroupLink,
       eligibilities: {
         create: data.eligibilities.map((e) => ({
           courseId: e.courseId || null,
@@ -190,7 +198,31 @@ export async function submitNewPaperSuggestion(
     },
   });
 
-  return { ok: true, message: "Thanks! Your suggestion has been sent to the MAC Group Links admin for review." };
+  revalidatePath("/admin/suggestions");
+
+  if (await getAutoApproveContributions()) {
+    const applied = await executeApplyNewPaperSuggestion(suggestion.id, {
+      auditDescription: `Auto-approved on submit: ${data.paperName}`,
+    });
+    if (applied.ok) {
+      revalidatePath("/");
+      revalidatePath("/contribute/add");
+      revalidatePath("/papers");
+      revalidatePath("/search");
+      revalidatePath(`/paper/${applied.paperId}`);
+      return {
+        ok: true,
+        message: linkFields
+          ? "Your paper and group link are live on the site."
+          : "Your paper is live on the site.",
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    message: "Thanks! Your suggestion has been sent to the MAC Group Links admin for review.",
+  };
 }
 
 export async function submitGroupReport(input: unknown): Promise<ActionResult> {

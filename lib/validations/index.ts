@@ -67,6 +67,11 @@ export const newPaperSuggestionSchema = z.object({
   notes: z.string().max(2000).optional(),
   contributorName: z.string().max(200).optional(),
   contributorType: z.nativeEnum(ContributorType).optional(),
+  groupPlatform: z.nativeEnum(GroupPlatform).optional(),
+  groupLink: z
+    .string()
+    .optional()
+    .refine((v) => !v || isValidGroupUrl(v), "Enter a valid URL (https://...)"),
   eligibilities: z.array(eligibilityRowSchema).default([]),
 });
 

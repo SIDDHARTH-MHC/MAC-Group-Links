@@ -130,7 +130,12 @@ export async function listPapersOpenForContribution(semesterId: string) {
       archivedAt: null,
       ...paperOpenForContributionWhere,
     },
-    select: { id: true, paperName: true, paperType: true },
+    select: {
+      id: true,
+      paperName: true,
+      paperType: true,
+      department: { select: { name: true } },
+    },
     orderBy: [{ paperType: "asc" }, { paperName: "asc" }],
   });
 }

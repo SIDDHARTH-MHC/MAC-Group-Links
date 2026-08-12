@@ -33,10 +33,10 @@ export function AutoApproveContributionsToggle({
     <div className="rounded-lg border bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-medium">Auto-approve contributions</p>
+          <p className="font-medium">Auto-approve submissions</p>
           <p className="mt-1 text-sm text-slate-600">
-            When on, new group link submissions go live immediately without
-            manual review.
+            When on, new group links and new paper suggestions (with optional
+            group link) go live immediately without manual review.
           </p>
         </div>
         <div className="flex items-center gap-2">

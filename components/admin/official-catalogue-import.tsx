@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { importOfficialCatalogue, importOfficialCatalogueAllOdd } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,14 @@ import type { officialCatalogueImportSchema } from "@/lib/validations";
 import type { z } from "zod";
 
 type Row = z.infer<typeof officialCatalogueImportSchema>[number];
+
+function uniqueImportKey(row: Row) {
+  return `${row.paperType}|${row.paperName.trim().toLowerCase()}|${row.department.trim().toLowerCase()}`;
+}
+
+function countUniqueImportKeys(rows: Row[]) {
+  return new Set(rows.map(uniqueImportKey)).size;
+}
 
 export function OfficialCatalogueImportClient({
   semesters,
@@ -56,6 +64,14 @@ export function OfficialCatalogueImportClient({
     (r) =>
       [1, 3, 5, 7].includes(r.semesterNumber) &&
       (includeReview || !r.needsReview),
+  );
+  const allOddUniqueCount = useMemo(
+    () => countUniqueImportKeys(allOddRows),
+    [allOddRows],
+  );
+  const singleSemUniqueCount = useMemo(
+    () => countUniqueImportKeys(rows),
+    [rows],
   );
 
   return (
@@ -128,7 +144,11 @@ export function OfficialCatalogueImportClient({
               })
             }
           >
-            Confirm import ({rows.length} papers)
+            Confirm import ({singleSemUniqueCount} unique
+            {rows.length !== singleSemUniqueCount
+              ? ` · ${rows.length} JSON rows`
+              : ""}
+            )
           </Button>
           <Button
             variant="secondary"
@@ -143,7 +163,11 @@ export function OfficialCatalogueImportClient({
               })
             }
           >
-            Import all odd sems 1+3+5+7 ({allOddRows.length})
+            Import all odd sems 1+3+5+7 ({allOddUniqueCount} unique
+            {allOddRows.length !== allOddUniqueCount
+              ? ` · ${allOddRows.length} JSON rows, cross-sem repeats skipped`
+              : ""}
+            )
           </Button>
         </div>
       </div>

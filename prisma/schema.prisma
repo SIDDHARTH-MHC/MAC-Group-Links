@@ -280,6 +280,9 @@ model Suggestion {
   sourceDocumentUrl  String?
   contributorName    String?
   contributorType    ContributorType?
+  groupPlatform      GroupPlatform?
+  groupLink          String?
+  normalizedGroupLink String?
   status             ReviewStatus            @default(PENDING)
   adminNotes         String?
   createdAt          DateTime                @default(now())

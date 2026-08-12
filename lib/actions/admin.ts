@@ -22,6 +22,7 @@ import {
 } from "@/lib/admin/import-papers";
 import { previewOfficialCatalogue } from "@/lib/catalogue/official";
 import { executeApproveContribution } from "@/lib/contributions/approve-contribution";
+import { executeApplyNewPaperSuggestion } from "@/lib/suggestions/apply-new-paper-suggestion";
 import { setAutoApproveContributions as persistAutoApproveContributions } from "@/lib/settings/site";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -529,11 +530,12 @@ export async function setAutoApproveContributions(
   await requireAdminSession();
   await persistAutoApproveContributions(enabled);
   revalidatePath("/admin/contributions");
+  revalidatePath("/admin/suggestions");
   return {
     ok: true,
     message: enabled
-      ? "New contributions will be approved automatically."
-      : "Contributions will require manual approval.",
+      ? "New contributions and new paper suggestions will be approved automatically."
+      : "Contributions and new paper suggestions will require manual approval.",
   };
 }
 
@@ -600,37 +602,11 @@ export async function applySuggestion(suggestionId: string): Promise<ActionResul
     s.paperName &&
     s.suggestedDepartmentName
   ) {
-    const semester = await prisma.semester.findFirst({
-      where: { status: "ACTIVE" },
-    });
-    if (!semester) return { ok: false, error: "No active semester" };
-    let dept = await findDepartmentByName(s.suggestedDepartmentName);
-    if (!dept) {
-      dept = await prisma.department.create({
-        data: {
-          name: s.suggestedDepartmentName.trim(),
-          departmentRoom: s.suggestedDepartmentRoom ?? undefined,
-        },
-      });
-    }
-    await prisma.paper.create({
-      data: {
-        semesterId: semester.id,
-        paperType: s.paperType,
-        paperName: s.paperName,
-        departmentId: dept.id,
-        sourceDocumentUrl: s.sourceDocumentUrl,
-        eligibilities: {
-          create: s.eligibilities.map((e) => ({
-            courseId: e.courseId,
-            year: e.year,
-            combination: e.combination,
-            notes: e.notes,
-            appliesToAll: e.appliesToAll,
-          })),
-        },
-      },
-    });
+    const result = await executeApplyNewPaperSuggestion(suggestionId);
+    if (!result.ok) return result;
+    revalidatePublicCatalogue(result.paperId);
+    revalidatePath("/admin/suggestions");
+    return { ok: true };
   } else if (s.groupId && s.suggestedValue) {
     if (s.type === "WRONG_GROUP_LINK") {
       const paperId = s.paperId ?? s.group?.paperId;
@@ -704,6 +680,38 @@ export async function rejectSuggestion(
   await logAdminAction("SUGGESTION_REJECTED", "Rejected suggestion", "Suggestion", suggestionId);
   revalidatePath("/admin/suggestions");
   return { ok: true };
+}
+
+export type ApproveAllNewPaperSuggestionsResult = {
+  approved: number;
+  failed: { label: string; error: string }[];
+};
+
+export async function approveAllNewPaperSuggestions(): Promise<ApproveAllNewPaperSuggestionsResult> {
+  await requireAdminSession();
+  const pending = await prisma.suggestion.findMany({
+    where: { status: "PENDING", type: "NEW_PAPER" },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const failed: { label: string; error: string }[] = [];
+  let approved = 0;
+
+  for (const suggestion of pending) {
+    const result = await executeApplyNewPaperSuggestion(suggestion.id);
+    if (result.ok) {
+      approved += 1;
+      revalidatePublicCatalogue(result.paperId);
+    } else {
+      failed.push({
+        label: suggestion.paperName ?? suggestion.description.slice(0, 60),
+        error: result.error,
+      });
+    }
+  }
+
+  revalidatePath("/admin/suggestions");
+  return { approved, failed };
 }
 
 export async function handleReport(

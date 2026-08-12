@@ -38,7 +38,12 @@ export function ContributeForm({
   courses,
   initialPaperId,
 }: {
-  papers: { id: string; paperName: string; paperType: string }[];
+  papers: {
+    id: string;
+    paperName: string;
+    paperType: string;
+    department: { name: string };
+  }[];
   courses: Course[];
   initialPaperId?: string;
 }) {
@@ -228,7 +233,12 @@ export function ContributeForm({
         </div>
         <PaperCombobox
           id="paper-combobox"
-          papers={papersForType}
+          papers={papersForType.map((p) => ({
+            id: p.id,
+            paperName: p.paperName,
+            paperType: p.paperType,
+            departmentName: p.department.name,
+          }))}
           value={validPaperId}
           onValueChange={(id) => {
             setPaperId(id);

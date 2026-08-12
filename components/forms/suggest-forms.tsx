@@ -28,9 +28,9 @@ import {
   type MultiAudienceState,
 } from "@/components/forms/eligibility-audience-fields";
 import { SuggestionSuccess } from "@/components/forms/suggestion-success";
-import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS, formatEligibility } from "@/lib/constants";
+import { MAC_PAPER_TYPES, PAPER_TYPE_LABELS, formatEligibility, isValidGroupUrl } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { PaperType, SuggestionType } from "@prisma/client";
+import { PaperType, SuggestionType, GroupPlatform } from "@prisma/client";
 import type { Course } from "@prisma/client";
 
 type SuggestMode = "edit" | "new";
@@ -506,6 +506,8 @@ function NewPaperSuggestionForm({
   const [multiAudience, setMultiAudience] =
     useState<MultiAudienceState>(emptyMultiAudience);
   const [notes, setNotes] = useState("");
+  const [groupLink, setGroupLink] = useState("");
+  const [groupPlatform, setGroupPlatform] = useState<GroupPlatform>("WHATSAPP");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -533,6 +535,10 @@ function NewPaperSuggestionForm({
     );
     if (audErr) {
       setFieldError(audErr);
+      return false;
+    }
+    if (groupLink.trim() && !isValidGroupUrl(groupLink)) {
+      setFieldError("Enter a valid group link URL (https://...).");
       return false;
     }
     setFieldError(null);
@@ -630,6 +636,38 @@ function NewPaperSuggestionForm({
         />
       </div>
 
+      <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-4">
+        <p className="text-sm font-medium text-foreground">
+          Group link{" "}
+          <span className="font-normal text-muted-foreground">(optional)</span>
+        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="new-platform">Platform</Label>
+          <Select
+            value={groupPlatform}
+            onValueChange={(v) => setGroupPlatform(v as GroupPlatform)}
+          >
+            <SelectTrigger id="new-platform" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+              <SelectItem value="TELEGRAM">Telegram</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="new-group-link">Group link</Label>
+          <Input
+            id="new-group-link"
+            value={groupLink}
+            onChange={(e) => setGroupLink(e.target.value)}
+            placeholder="https://chat.whatsapp.com/..."
+          />
+        </div>
+      </div>
+
       <FieldError message={fieldError ?? submitError} />
 
       <Button
@@ -653,6 +691,8 @@ function NewPaperSuggestionForm({
               suggestedDepartmentName: departmentName,
               suggestedDepartmentRoom: departmentRoom.trim() || undefined,
               notes: notes.trim() || undefined,
+              groupPlatform: groupLink.trim() ? groupPlatform : undefined,
+              groupLink: groupLink.trim() || undefined,
               eligibilities,
             });
             if (res.ok) {
